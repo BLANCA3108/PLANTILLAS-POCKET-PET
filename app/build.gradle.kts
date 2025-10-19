@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.mascotafinanciera"
+    namespace = "com.lvmh.pocketpet"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.mascotafinanciera"
+        applicationId = "com.lvmh.pocketpet"
         minSdk = 27
         targetSdk = 36
         versionCode = 1
@@ -33,14 +33,15 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
+        freeCompilerArgs += listOf(
+            "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api"
+        )
     }
     buildFeatures {
         compose = true
     }
 }
-
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -49,7 +50,9 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation("androidx.compose.material:material-icons-extended")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
+    implementation("androidx.compose.material:material-icons-extended:1.7.6")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -57,15 +60,4 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    // Navigation Compose (para navegar entre pantallas)
-    implementation("androidx.navigation:navigation-compose:2.7.7")
-
-    // Animaciones extra
-    implementation("androidx.compose.animation:animation:1.6.2")
-
-    // Coil (para cargar imágenes)
-    implementation("io.coil-kt:coil-compose:2.5.0")
-
-    // Lottie (animaciones JSON)
-    implementation("com.airbnb.android:lottie-compose:6.3.0")
 }
