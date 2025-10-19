@@ -22,14 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mascotafinanciera.ui.theme.*
 
-/**
- * Pantalla de desafíos y retos semanales
- * Muestra retos activos, completados y próximos
- *
- * @author MARICARMEN
- */
-
-// ========== DATOS ==========
 data class Desafio(
     val id: String,
     val titulo: String,
@@ -56,10 +48,8 @@ fun PantallaDesafios() {
     var pantalla_seleccionada by remember { mutableStateOf(1) }
     var tabSeleccionada by remember { mutableStateOf(0) }
 
-    // Desafíos de ejemplo
     val desafios = remember {
         listOf(
-            // ACTIVOS
             Desafio(
                 id = "ahorro_semanal",
                 titulo = "Ahorro Semanal",
@@ -99,8 +89,6 @@ fun PantallaDesafios() {
                 dificultad = DificultadDesafio.DIFICIL,
                 diasRestantes = 3
             ),
-
-            // COMPLETADOS
             Desafio(
                 id = "primera_meta",
                 titulo = "Primera Meta Cumplida",
@@ -174,7 +162,6 @@ fun PantallaDesafios() {
                 .padding(paddingValues)
                 .background(FondoApp)
         ) {
-            // ========== BANNER INFORMATIVO ==========
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -218,7 +205,6 @@ fun PantallaDesafios() {
                 }
             }
 
-            // ========== ESTADÍSTICAS ==========
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -250,7 +236,6 @@ fun PantallaDesafios() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ========== TABS ==========
             TabRow(
                 selectedTabIndex = tabSeleccionada,
                 containerColor = Color.White,
@@ -279,7 +264,6 @@ fun PantallaDesafios() {
                 )
             }
 
-            // ========== LISTA DE DESAFÍOS ==========
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -308,7 +292,6 @@ fun PantallaDesafios() {
     }
 }
 
-// ========== COMPONENTE: MINI ESTADÍSTICA ==========
 @Composable
 fun MiniEstadistica(
     emoji: String,
@@ -348,7 +331,6 @@ fun MiniEstadistica(
     }
 }
 
-// ========== COMPONENTE: TARJETA DE DESAFÍO ==========
 @Composable
 fun TarjetaDesafio(desafio: Desafio) {
     Card(
@@ -409,7 +391,6 @@ fun TarjetaDesafio(desafio: Desafio) {
                     }
                 }
 
-                // Días restantes
                 if (!desafio.completado) {
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
@@ -436,7 +417,6 @@ fun TarjetaDesafio(desafio: Desafio) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Descripción
             Text(
                 text = desafio.descripcion,
                 fontSize = 13.sp,
@@ -446,7 +426,6 @@ fun TarjetaDesafio(desafio: Desafio) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Progreso
             Column {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -478,7 +457,6 @@ fun TarjetaDesafio(desafio: Desafio) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Recompensas
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -498,7 +476,6 @@ fun TarjetaDesafio(desafio: Desafio) {
     }
 }
 
-// ========== COMPONENTE: CHIP DE RECOMPENSA ==========
 @Composable
 fun RecompensaChip(icono: ImageVector, texto: String, color: Color) {
     Surface(
@@ -526,7 +503,6 @@ fun RecompensaChip(icono: ImageVector, texto: String, color: Color) {
     }
 }
 
-// ========== PREVIEW ==========
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewPantallaDesafios() {
