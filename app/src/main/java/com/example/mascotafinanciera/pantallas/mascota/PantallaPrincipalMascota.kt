@@ -219,7 +219,6 @@ fun PantallaPrincipalMascota(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // ========== ESTADÍSTICAS RÁPIDAS ==========
             TarjetaEstadisticas()
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -392,9 +391,7 @@ fun TarjetaSalud(salud: Int) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Barra de salud circular
             Box(contentAlignment = Alignment.Center) {
-                // Círculo de fondo
                 CircularProgressIndicator(
                     progress = 1f,
                     modifier = Modifier.size(130.dp),
@@ -403,7 +400,6 @@ fun TarjetaSalud(salud: Int) {
                     trackColor = Color.Transparent
                 )
 
-                // Progreso real
                 CircularProgressIndicator(
                     progress = salud / 100f,
                     modifier = Modifier.size(130.dp),
