@@ -5,19 +5,19 @@
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="PreviewPantallaEvolucion">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
       <SelectionState runConfigName="PreviewEstadisticas">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="PreviewHabitacion">
+      <SelectionState runConfigName="PreviewPantallaMascota">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="PreviewAtrapaMonedasJuego">
+      <SelectionState runConfigName="PreviewPantallaLogros">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="PreviewBuscaMinasJuego">
+      <SelectionState runConfigName="PreviewPersonalizar">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="PreviewPantallaMensajes">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>
