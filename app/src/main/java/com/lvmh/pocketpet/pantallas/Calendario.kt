@@ -27,7 +27,14 @@ fun Calendario() {
     var transacciones by remember {
         mutableStateOf(
             listOf(
-                Transaccion("Salario", "18:27 - Abril 30", 4000.00, "💼"),
+                Transaccion(
+                    id = "1",
+                    tipo = "Ingreso",
+                    monto = "4000.00",
+                    categoria = "Salario",
+                    fecha = "30/04/2025",
+                    descripcion = "Salario mensual"
+                )
             )
         )
     }
@@ -52,7 +59,7 @@ fun Calendario() {
                         }
 
                         Spacer(Modifier.width(8.dp))
-                        Text("Calendeario", color = Color.White)
+                        Text("Calendario", color = Color.White)
                     }
                 },
                 actions = {
@@ -86,7 +93,7 @@ fun Calendario() {
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    "Calenderario",
+                    "Calendario",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -262,14 +269,14 @@ fun TransaccionItem(transaccion: Transaccion) {
             ) {
                 Icon(
                     imageVector = Icons.Default.Notifications,
-                    contentDescription = transaccion.tipo,
+                    contentDescription = transaccion.categoria,
                     tint = Color(0xFF4CAF50)
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column {
                 Text(
-                    text = transaccion.tipo,
+                    text = transaccion.categoria,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp
                 )
@@ -281,11 +288,11 @@ fun TransaccionItem(transaccion: Transaccion) {
             }
         }
         Text(
-            text = if (transaccion.monto >= 0)
-                "S/ ${String.format("%.2f", transaccion.monto)}"
+            text = if (transaccion.tipo == "Ingreso")
+                "S/ ${transaccion.monto}"
             else
-                "-S/ ${String.format("%.2f", -transaccion.monto)}",
-            color = if (transaccion.monto >= 0) Color(0xFF4CAF50) else Color.Red,
+                "-S/ ${transaccion.monto}",
+            color = if (transaccion.tipo == "Ingreso") Color(0xFF4CAF50) else Color.Red,
             fontWeight = FontWeight.Bold,
             fontSize = 15.sp
         )
@@ -298,16 +305,16 @@ fun FormularioNuevaTransaccion(
     onDismiss: () -> Unit,
     onGuardar: (Transaccion) -> Unit
 ) {
-    var tipo by remember { mutableStateOf("") }
+    var tipo by remember { mutableStateOf("Ingreso") }
     var monto by remember { mutableStateOf("") }
+    var categoria by remember { mutableStateOf("") }
     var fecha by remember { mutableStateOf("") }
-    var hora by remember { mutableStateOf("") }
-    var esIngreso by remember { mutableStateOf(false) }
+    var descripcion by remember { mutableStateOf("") }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxWidth(0.9f)
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp)
         ) {
@@ -315,6 +322,7 @@ fun FormularioNuevaTransaccion(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -323,31 +331,54 @@ fun FormularioNuevaTransaccion(
                 ) {
                     Text(
                         "Nueva Transacción",
-                        fontSize = 24.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    IconButton(onClick = onDismiss) {
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
                         Icon(Icons.Default.Close, "Cerrar")
                     }
                 }
 
                 Spacer(Modifier.height(16.dp))
 
-                OutlinedTextField(
-                    value = tipo,
-                    onValueChange = { tipo = it },
-                    label = { Text("Tipo de transacción") },
-                    placeholder = { Text("Ej. Comida, Transporte, Salario") },
-                    leadingIcon = { Icon(Icons.Default.Category, null) },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = { tipo = "Ingreso" },
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (tipo == "Ingreso") Color(0xFF4CAF50) else Color.LightGray
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Ingreso", fontWeight = FontWeight.Bold)
+                    }
+                    Button(
+                        onClick = { tipo = "Gasto" },
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (tipo == "Gasto") Color(0xFFFF6B6B) else Color.LightGray
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Gasto", fontWeight = FontWeight.Bold)
+                    }
+                }
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(16.dp))
 
                 OutlinedTextField(
                     value = monto,
-                    onValueChange = { monto = it.filter { char -> char.isDigit() || char == '.' } },
-                    label = { Text("Monto*") },
+                    onValueChange = { monto = it },
+                    label = { Text("Monto") },
                     placeholder = { Text("0.00") },
                     leadingIcon = { Text("S/", modifier = Modifier.padding(start = 12.dp)) },
                     modifier = Modifier.fillMaxWidth()
@@ -355,63 +386,49 @@ fun FormularioNuevaTransaccion(
 
                 Spacer(Modifier.height(12.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedTextField(
-                        value = fecha,
-                        onValueChange = { fecha = it },
-                        label = { Text("Fecha") },
-                        placeholder = { Text("DD/MM/YYYY") },
-                        leadingIcon = { Icon(Icons.Default.DateRange, null) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = hora,
-                        onValueChange = { hora = it },
-                        label = { Text("Hora") },
-                        placeholder = { Text("HH:MM") },
-                        leadingIcon = { Icon(Icons.Default.AccessTime, null) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                OutlinedTextField(
+                    value = categoria,
+                    onValueChange = { categoria = it },
+                    label = { Text("Categoría") },
+                    placeholder = { Text("Ej. Salario, Comida") },
+                    leadingIcon = { Icon(Icons.Default.Category, null) },
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(12.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("¿Es un ingreso?", fontSize = 16.sp)
-                    Switch(
-                        checked = esIngreso,
-                        onCheckedChange = { esIngreso = it },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = Color(0xFF4CAF50)
-                        )
-                    )
-                }
+                OutlinedTextField(
+                    value = fecha,
+                    onValueChange = { fecha = it },
+                    label = { Text("Fecha") },
+                    placeholder = { Text("DD/MM/YYYY") },
+                    leadingIcon = { Icon(Icons.Default.DateRange, null) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = descripcion,
+                    onValueChange = { descripcion = it },
+                    label = { Text("Descripción") },
+                    placeholder = { Text("Descripción (opcional)") },
+                    leadingIcon = { Icon(Icons.Default.NoteAdd, null) },
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 Spacer(Modifier.height(20.dp))
 
                 Button(
                     onClick = {
-                        if (tipo.isNotEmpty() && monto.isNotEmpty()) {
-                            val montoFinal = monto.toDoubleOrNull() ?: 0.0
+                        if (monto.isNotEmpty() && categoria.isNotEmpty() && fecha.isNotEmpty()) {
                             val transaccion = Transaccion(
+                                id = System.currentTimeMillis().toString(),
                                 tipo = tipo,
-                                fecha = "$hora - $fecha",
-                                monto = if (esIngreso) montoFinal else -montoFinal,
-                                icono = when (tipo.lowercase()) {
-                                    "comida" -> "🍽️"
-                                    "transporte" -> "🚌"
-                                    "salario" -> "💼"
-                                    "renta" -> "🏠"
-                                    else -> "💰"
-                                }
+                                monto = monto,
+                                categoria = categoria,
+                                fecha = fecha,
+                                descripcion = descripcion
                             )
                             onGuardar(transaccion)
                         }

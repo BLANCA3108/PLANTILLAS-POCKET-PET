@@ -314,7 +314,7 @@ fun NuevoPresupuestoDialog(
                 OutlinedTextField(
                     value = nombre,
                     onValueChange = { nombre = it },
-                    label = { Text("Nombre (ej: Comida, Transporte)") },
+                    label = { Text("Presupuesto") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
