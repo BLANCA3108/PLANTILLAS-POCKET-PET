@@ -57,7 +57,6 @@ fun PantallaPrincipalMascota(
         label = "escala_respiracion"
     )
 
-    // Estado para mostrar mensajes de las acciones
     var mensajeAccion by remember { mutableStateOf("") }
 
     Scaffold(
