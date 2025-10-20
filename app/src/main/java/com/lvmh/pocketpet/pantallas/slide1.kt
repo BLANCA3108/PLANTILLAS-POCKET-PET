@@ -3,6 +3,7 @@ package com.lvmh.pocketpet.pantallas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -14,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun Slide1() {
+fun Slide1(onNext: () -> Unit = {}) {
     val celeste = Color(0xFF4A90E2)
 
     Column(
@@ -56,5 +57,8 @@ fun Slide1() {
             textAlign = TextAlign.Center,
             lineHeight = 24.sp
         )
+        Button(onClick = onNext) {
+            Text("Siguiente")
+        }
     }
 }

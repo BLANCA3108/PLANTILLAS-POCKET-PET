@@ -2,6 +2,7 @@ package com.lvmh.pocketpet.pantallas
 
 import com.lvmh.pocketpet.DateBase.Transaccion
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -19,11 +20,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Calendario() {
+    val verde = Color(0xFF4CAF50)
+
     var transacciones by remember {
         mutableStateOf(
             listOf(
@@ -39,6 +41,7 @@ fun Calendario() {
         )
     }
     var mostrarFormulario by remember { mutableStateOf(false) }
+    var filtroSeleccionado by remember { mutableStateOf("Todos") }
 
     Scaffold(
         topBar = {
@@ -54,12 +57,11 @@ fun Calendario() {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
                                 contentDescription = "Atrás",
-                                tint = Color(0xFF4CAF50)
+                                tint = verde
                             )
                         }
-
                         Spacer(Modifier.width(8.dp))
-                        Text("Calendario", color = Color.White)
+                        Text("Calendario", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 },
                 actions = {
@@ -68,7 +70,7 @@ fun Calendario() {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF4CAF50)
+                    containerColor = verde
                 )
             )
         }
@@ -89,77 +91,128 @@ fun Calendario() {
                 Icon(
                     Icons.Default.DateRange,
                     contentDescription = null,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
+                    tint = verde
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     "Calendario",
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White, RoundedCornerShape(12.dp))
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Abril ▼", color = Color(0xFF4CAF50), fontWeight = FontWeight.Medium)
-                Text("2025 ▼", color = Color(0xFF4CAF50), fontWeight = FontWeight.Medium)
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Abril", color = verde, fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                    Icon(Icons.Default.ArrowDropDown, null, tint = verde, modifier = Modifier.size(20.dp))
+                }
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("2025", color = verde, fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                    Icon(Icons.Default.ArrowDropDown, null, tint = verde, modifier = Modifier.size(20.dp))
+                }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             CalendarioGrid()
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(
-                    onClick = { },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF6B6B)),
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Egresos", fontSize = 12.sp)
-                }
-                Button(
-                    onClick = { },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Ingresos", fontSize = 12.sp)
-                }
-                Button(
-                    onClick = { },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFEB3B)),
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Todos", fontSize = 12.sp, color = Color.Black)
-                }
+                FilterChip(
+                    selected = filtroSeleccionado == "Egresos",
+                    onClick = { filtroSeleccionado = "Egresos" },
+                    label = { Text("Egresos") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Color(0xFFFF6B6B),
+                        selectedLabelColor = Color.White
+                    )
+                )
+                FilterChip(
+                    selected = filtroSeleccionado == "Ingresos",
+                    onClick = { filtroSeleccionado = "Ingresos" },
+                    label = { Text("Ingresos") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = verde,
+                        selectedLabelColor = Color.White
+                    )
+                )
+                FilterChip(
+                    selected = filtroSeleccionado == "Todos",
+                    onClick = { filtroSeleccionado = "Todos" },
+                    label = { Text("Todos") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Color(0xFFFFEB3B),
+                        selectedLabelColor = Color.Black
+                    )
+                )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
+
             Text(
-                "Transaccion",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
+                "Transacciones",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            transacciones.forEach { transaccion ->
-                TransaccionItem(transaccion)
-                Spacer(modifier = Modifier.height(8.dp))
+            val transaccionesFiltradas = transacciones.filter { transaccion ->
+                when (filtroSeleccionado) {
+                    "Egresos" -> transaccion.tipo == "Gasto"
+                    "Ingresos" -> transaccion.tipo == "Ingreso"
+                    else -> true
+                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            if (transaccionesFiltradas.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "No hay transacciones",
+                        fontSize = 14.sp,
+                        color = Color.Gray,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                transaccionesFiltradas.forEach { transaccion ->
+                    TransaccionItemCalendario(transaccion)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             Column(
                 modifier = Modifier
@@ -170,43 +223,60 @@ fun Calendario() {
                 IconButton(
                     onClick = { mostrarFormulario = true },
                     modifier = Modifier
-                        .size(48.dp)
-                        .background(Color(0xFF4CAF50), CircleShape)
+                        .size(56.dp)
+                        .background(verde, CircleShape)
                 ) {
                     Icon(
                         Icons.Default.Add,
                         contentDescription = "Agregar",
                         tint = Color.White,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(32.dp)
                     )
                 }
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "Agregar\nTransaccion",
-                    fontSize = 14.sp,
+                    "Agregar\nTransacción",
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    color = Color.Black
                 )
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 
     if (mostrarFormulario) {
-        FormularioNuevaTransaccion(
+        FormularioTransaccion(
             onDismiss = { mostrarFormulario = false },
-            onGuardar = { nuevaTransaccion ->
+            onGuardar = { tipo, monto, categoria, fecha, descripcion ->
+                val nuevaTransaccion = Transaccion(
+                    id = System.currentTimeMillis().toString(),
+                    tipo = tipo,
+                    monto = monto,
+                    categoria = categoria,
+                    fecha = fecha,
+                    descripcion = descripcion
+                )
                 transacciones = transacciones + nuevaTransaccion
                 mostrarFormulario = false
-            }
+            },
+            temaColor = verde
         )
     }
 }
 
 @Composable
 fun CalendarioGrid() {
-    val diasSemana = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    val diasSemana = listOf("Lun", "Mar", "Mié", "Jue", "Vie", "Sab", "Dom")
 
-    Column {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(12.dp))
+            .padding(12.dp)
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -216,34 +286,50 @@ fun CalendarioGrid() {
                     dia,
                     fontSize = 11.sp,
                     color = Color.Gray,
+                    fontWeight = FontWeight.Medium,
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        val dias = (1..31).toList()
+        val dias = (1..30).toList()
         val semanas = dias.chunked(7)
+        val diaInicio = 3
 
-        semanas.forEach { semana ->
+        val primeraSemana = (1..diaInicio).map { null } + semanas.first().take(7 - diaInicio)
+
+        (primeraSemana + semanas.drop(1).flatten()).chunked(7).forEach { semana ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 semana.forEach { dia ->
-                    Text(
-                        dia.toString(),
-                        fontSize = 14.sp,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(vertical = 4.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
-                repeat(7 - semana.size) {
-                    Spacer(modifier = Modifier.weight(1f))
+                    if (dia == null) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(4.dp)
+                                .background(
+                                    if (dia == 30) Color(0xFF4CAF50).copy(alpha = 0.2f) else Color.Transparent,
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .padding(8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                dia.toString(),
+                                fontSize = 13.sp,
+                                fontWeight = if (dia == 30) FontWeight.Bold else FontWeight.Normal,
+                                color = if (dia == 30) Color(0xFF4CAF50) else Color.Black,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -251,197 +337,64 @@ fun CalendarioGrid() {
 }
 
 @Composable
-fun TransaccionItem(transaccion: Transaccion) {
-    Row(
+fun TransaccionItemCalendario(transaccion: Transaccion) {
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF4CAF50).copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Notifications,
-                    contentDescription = transaccion.categoria,
-                    tint = Color(0xFF4CAF50)
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(
-                    text = transaccion.categoria,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp
-                )
-                Text(
-                    text = transaccion.fecha,
-                    fontSize = 13.sp,
-                    color = Color.Gray
-                )
-            }
-        }
-        Text(
-            text = if (transaccion.tipo == "Ingreso")
-                "S/ ${transaccion.monto}"
-            else
-                "-S/ ${transaccion.monto}",
-            color = if (transaccion.tipo == "Ingreso") Color(0xFF4CAF50) else Color.Red,
-            fontWeight = FontWeight.Bold,
-            fontSize = 15.sp
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun FormularioNuevaTransaccion(
-    onDismiss: () -> Unit,
-    onGuardar: (Transaccion) -> Unit
-) {
-    var tipo by remember { mutableStateOf("Ingreso") }
-    var monto by remember { mutableStateOf("") }
-    var categoria by remember { mutableStateOf("") }
-    var fecha by remember { mutableStateOf("") }
-    var descripcion by remember { mutableStateOf("") }
-
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
+        Row(
             modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp)
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp)
-                    .verticalScroll(rememberScrollState())
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "Nueva Transacción",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
-                        Icon(Icons.Default.Close, "Cerrar")
-                    }
-                }
-
-                Spacer(Modifier.height(16.dp))
-
-                Row(
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(40.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF4CAF50).copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Button(
-                        onClick = { tipo = "Ingreso" },
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (tipo == "Ingreso") Color(0xFF4CAF50) else Color.LightGray
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text("Ingreso", fontWeight = FontWeight.Bold)
-                    }
-                    Button(
-                        onClick = { tipo = "Gasto" },
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (tipo == "Gasto") Color(0xFFFF6B6B) else Color.LightGray
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text("Gasto", fontWeight = FontWeight.Bold)
-                    }
+                    Icon(
+                        imageVector = if (transaccion.tipo == "Ingreso") Icons.Default.TrendingUp else Icons.Default.TrendingDown,
+                        contentDescription = transaccion.categoria,
+                        tint = if (transaccion.tipo == "Ingreso") Color(0xFF4CAF50) else Color(0xFFFF6B6B),
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
-
-                Spacer(Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = monto,
-                    onValueChange = { monto = it },
-                    label = { Text("Monto") },
-                    placeholder = { Text("0.00") },
-                    leadingIcon = { Text("S/", modifier = Modifier.padding(start = 12.dp)) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = categoria,
-                    onValueChange = { categoria = it },
-                    label = { Text("Categoría") },
-                    placeholder = { Text("Ej. Salario, Comida") },
-                    leadingIcon = { Icon(Icons.Default.Category, null) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = fecha,
-                    onValueChange = { fecha = it },
-                    label = { Text("Fecha") },
-                    placeholder = { Text("DD/MM/YYYY") },
-                    leadingIcon = { Icon(Icons.Default.DateRange, null) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = descripcion,
-                    onValueChange = { descripcion = it },
-                    label = { Text("Descripción") },
-                    placeholder = { Text("Descripción (opcional)") },
-                    leadingIcon = { Icon(Icons.Default.NoteAdd, null) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(Modifier.height(20.dp))
-
-                Button(
-                    onClick = {
-                        if (monto.isNotEmpty() && categoria.isNotEmpty() && fecha.isNotEmpty()) {
-                            val transaccion = Transaccion(
-                                id = System.currentTimeMillis().toString(),
-                                tipo = tipo,
-                                monto = monto,
-                                categoria = categoria,
-                                fecha = fecha,
-                                descripcion = descripcion
-                            )
-                            onGuardar(transaccion)
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF4CAF50)
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Guardar Transacción", modifier = Modifier.padding(8.dp))
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = transaccion.categoria,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        color = Color.Black
+                    )
+                    Text(
+                        text = transaccion.fecha,
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
                 }
             }
+            Text(
+                text = if (transaccion.tipo == "Ingreso")
+                    "+S/ ${transaccion.monto}"
+                else
+                    "-S/ ${transaccion.monto}",
+                color = if (transaccion.tipo == "Ingreso") Color(0xFF4CAF50) else Color(0xFFFF6B6B),
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp
+            )
         }
     }
 }

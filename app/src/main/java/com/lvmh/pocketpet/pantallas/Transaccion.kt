@@ -19,12 +19,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import com.lvmh.pocketpet.DateBase.Transaccion
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Transaccion() {
+fun Transaccion(onNext: () -> Unit = {}) {
     val azulPrimario = Color(0xFF5E35B1)
     var mostrarAgregar by remember { mutableStateOf(false) }
     var mostrarDetalles by remember { mutableStateOf(false) }
@@ -44,12 +43,12 @@ fun Transaccion() {
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Atras",
+                                contentDescription = "Atrás",
                                 tint = Color.Black
                             )
                         }
                         Spacer(Modifier.width(8.dp))
-                        Text("Transacciones", color = Color.White)
+                        Text("Transacciones", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -63,7 +62,7 @@ fun Transaccion() {
                 containerColor = azulPrimario,
                 contentColor = Color.White
             ) {
-                Icon(Icons.Default.Add, "Agregar Transaccion")
+                Icon(Icons.Default.Add, "Agregar Transacción")
             }
         }
     ) { paddingValues ->
@@ -93,7 +92,7 @@ fun Transaccion() {
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "FILTROS RAPIDOS",
+                text = "FILTROS RÁPIDOS",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
@@ -169,7 +168,7 @@ fun Transaccion() {
                 FilterChip(
                     selected = false,
                     onClick = { },
-                    label = { Text("Minimo") },
+                    label = { Text("Mínimo") },
                     colors = FilterChipDefaults.filterChipColors(
                         containerColor = Color.LightGray,
                         labelColor = Color.Black
@@ -179,7 +178,7 @@ fun Transaccion() {
                 FilterChip(
                     selected = false,
                     onClick = { },
-                    label = { Text("Maximo") },
+                    label = { Text("Máximo") },
                     colors = FilterChipDefaults.filterChipColors(
                         containerColor = Color.LightGray,
                         labelColor = Color.Black
@@ -191,7 +190,7 @@ fun Transaccion() {
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "CATEGORIAS",
+                text = "CATEGORÍAS",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
@@ -249,6 +248,10 @@ fun Transaccion() {
                 )
             }
 
+            Button(onClick = onNext) {
+                Text("Siguiente")
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             if (transacciones.isEmpty()) {
@@ -278,7 +281,7 @@ fun Transaccion() {
     }
 
     if (mostrarAgregar) {
-        DialogoAgregarTransaccion(
+        FormularioTransaccion(
             onDismiss = { mostrarAgregar = false },
             onGuardar = { tipo, monto, categoria, fecha, descripcion ->
                 val nuevaTransaccion = Transaccion(
@@ -291,7 +294,8 @@ fun Transaccion() {
                 )
                 transacciones = transacciones + nuevaTransaccion
                 mostrarAgregar = false
-            }
+            },
+            temaColor = azulPrimario
         )
     }
 
@@ -352,183 +356,6 @@ fun TarjetaTransaccion(
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text("Ver Detalles", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
-            }
-        }
-    }
-}
-
-@Composable
-fun DialogoAgregarTransaccion(
-    onDismiss: () -> Unit,
-    onGuardar: (String, String, String, String, String) -> Unit
-) {
-    val azulPrimario = Color(0xFF5E35B1)
-    val verde = Color(0xFF4CAF50)
-    val rojo = Color(0xFFF44336)
-
-    var tipoSeleccionado by remember { mutableStateOf("Ingreso") }
-    var monto by remember { mutableStateOf("") }
-    var categoria by remember { mutableStateOf("") }
-    var fecha by remember { mutableStateOf("") }
-    var descripcion by remember { mutableStateOf("") }
-
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .padding(16.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(20.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "Agregar Transaccion",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-                    IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
-                        Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = Color.Black)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(40.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Button(
-                        onClick = { tipoSeleccionado = "Ingreso" },
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (tipoSeleccionado == "Ingreso") verde else Color.LightGray,
-                            contentColor = if (tipoSeleccionado == "Ingreso") Color.White else Color.Black
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text("Ingreso", fontWeight = FontWeight.Bold)
-                    }
-                    Button(
-                        onClick = { tipoSeleccionado = "Gasto" },
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (tipoSeleccionado == "Gasto") rojo else Color.LightGray,
-                            contentColor = if (tipoSeleccionado == "Gasto") Color.White else Color.Black
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text("Gasto", fontWeight = FontWeight.Bold)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                OutlinedTextField(
-                    value = monto,
-                    onValueChange = { monto = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Monto") },
-                    placeholder = { Text("0.00") },
-                    leadingIcon = { Icon(Icons.Default.AttachMoney, null, tint = Color.Black) },
-                    shape = RoundedCornerShape(8.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedBorderColor = azulPrimario
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = categoria,
-                    onValueChange = { categoria = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Categoria") },
-                    placeholder = { Text("Ejem:Comida") },
-                    leadingIcon = { Icon(Icons.Default.Category, null, tint = Color.Black) },
-                    shape = RoundedCornerShape(8.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedBorderColor = azulPrimario
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = fecha,
-                    onValueChange = { fecha = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Fecha") },
-                    placeholder = { Text("DD-MM-YYY") },
-                    leadingIcon = { Icon(Icons.Default.DateRange, null, tint = Color.Black) },
-                    shape = RoundedCornerShape(8.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedBorderColor = azulPrimario
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = descripcion,
-                    onValueChange = { descripcion = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Agregar Descripcion") },
-                    placeholder = { Text("uenta del mes") },
-                    leadingIcon = { Icon(Icons.Default.NoteAdd, null, tint = Color.Black) },
-                    shape = RoundedCornerShape(8.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedBorderColor = azulPrimario
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Button(
-                    onClick = { },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9E9E9E))
-                ) {
-                    Icon(Icons.Default.PhotoCamera, null, tint = Color.White)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Tomar Foto [Preview Imagen]", color = Color.White)
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Button(
-                    onClick = {
-                        onGuardar(tipoSeleccionado, monto, categoria, fecha, descripcion)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = azulPrimario)
-                ) {
-                    Icon(Icons.Default.FolderOpen, null, tint = Color.White)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Guardar", color = Color.White)
-                }
             }
         }
     }

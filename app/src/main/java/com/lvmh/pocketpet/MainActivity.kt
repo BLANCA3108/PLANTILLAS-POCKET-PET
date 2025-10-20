@@ -41,18 +41,18 @@ class MainActivity : ComponentActivity() {
                 //Metas()
                 //Presupuestos()
                 //AnalisisCategoria()
-                //Calendario()
+                Calendario()
                 //Proyecciones()
                 //GraficosComparativo()
-               // Slide1()
+                // Slide1()
                 //Slide2()
                 //Slide3()
                 //PantallaPrincipal()
-            //Transaccion()
-               // Categorias(onBack = { })
+                Transaccion()
+                // Categorias(onBack = { })
                 //Configuracion(onBack = { }, onNext = { })
                 //MiPerfil(onBack = { })
-                Logo()
+                //Logo()
             }
         }
     }
