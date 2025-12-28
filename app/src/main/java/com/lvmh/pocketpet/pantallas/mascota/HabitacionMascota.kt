@@ -1,8 +1,8 @@
-package com.example.mascotafinanciera.pantallas.mascota
+package com.lvmh.pocketpet.pantallas.mascota
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -18,7 +18,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -507,7 +506,7 @@ fun TarjetaEstilo(
         ),
         elevation = CardDefaults.cardElevation(if (seleccionado) 6.dp else 3.dp),
         shape = RoundedCornerShape(16.dp),
-        border = if (seleccionado) androidx.compose.foundation.BorderStroke(2.dp, MoradoPrincipal) else null
+        border = if (seleccionado) BorderStroke(2.dp, MoradoPrincipal) else null
     ) {
         Column(
             modifier = Modifier
@@ -655,7 +654,7 @@ fun TarjetaMueble(
         ),
         elevation = CardDefaults.cardElevation(if (colocado) 6.dp else 3.dp),
         shape = RoundedCornerShape(16.dp),
-        border = if (colocado) androidx.compose.foundation.BorderStroke(2.dp, VerdeMenta) else null
+        border = if (colocado) BorderStroke(2.dp, VerdeMenta) else null
     ) {
         Column(
             modifier = Modifier

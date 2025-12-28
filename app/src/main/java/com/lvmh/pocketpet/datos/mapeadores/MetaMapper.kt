@@ -1,4 +1,4 @@
-package com.lvmh.pocketpetdemo.datos.mapeadores
+package com.lvmh.pocketpet.datos.mapeadores
 
 import com.lvmh.pocketpet.datos.firebase.modelos.MetaFirebase
 import com.lvmh.pocketpet.datos.local.entidades.MetaEntity

@@ -1,4 +1,4 @@
-package com.example.mascotafinanciera.pantallas.mascota
+package com.lvmh.pocketpet.pantallas.mascota
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -24,6 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mascotafinanciera.ui.theme.*
+import kotlinx.coroutines.delay
 
 /*----MASCOTAAAAAA---*/
 data class EstadoMascota(
@@ -40,7 +41,8 @@ data class EstadoMascota(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaPrincipalMascota(
-    estado: EstadoMascota = EstadoMascota()
+    estado: EstadoMascota = EstadoMascota(),
+            onNavegar: (String) -> Unit = {}
 ) {
     var pantalla_seleccionada by remember { mutableStateOf(1) }
     var menuDeslizableAbierto by remember { mutableStateOf(false) }
@@ -123,16 +125,16 @@ fun PantallaPrincipalMascota(
                 onClose = { menuDeslizableAbierto = false },
                 onAccionSeleccionada = { accion ->
                     menuDeslizableAbierto = false
-                    mensajeAccion = when (accion) {
-                        "alimentar" -> "¡Has alimentado a tu mascota! 🍖"
-                        "jugar" -> "¡Juguemos juntos! 🎮"
-                        "cuidar" -> "Centro de cuidado abierto 🏥"
-                        "tienda" -> "Bienvenido a la tienda 🛍️"
-                        "estadisticas" -> "Estadísticas detalladas 📊"
-                        "regalos" -> "¡Reclama tu regalo diario! 🎁"
-                        "configuracion" -> "Configuración ⚙️"
-                        "ayuda" -> "Centro de ayuda ❓"
-                        else -> "Acción realizada"
+                    when (accion) {
+                        "alimentar" -> onNavegar(RutasMascota.Cuidar.ruta)  // 👈 CAMBIAR
+                        "jugar" -> onNavegar(RutasMascota.MenuJuegos.ruta)  // 👈 CAMBIAR
+                        "cuidar" -> onNavegar(RutasMascota.Cuidar.ruta)  // 👈 CAMBIAR
+                        "tienda" -> onNavegar(RutasMascota.Personalizar.ruta)  // 👈 CAMBIAR
+                        "estadisticas" -> onNavegar(RutasMascota.Estadisticas.ruta)  // 👈 CAMBIAR
+                        "regalos" -> mensajeAccion = "¡Reclama tu regalo diario! 🎁"
+                        "configuracion" -> mensajeAccion = "Configuración ⚙️"
+                        "ayuda" -> onNavegar(RutasMascota.Mensajes.ruta)  // 👈 CAMBIAR
+                        else -> mensajeAccion = "Acción realizada"
                     }
                 }
             )
@@ -140,7 +142,7 @@ fun PantallaPrincipalMascota(
 
         if (mensajeAccion.isNotEmpty()) {
             LaunchedEffect(mensajeAccion) {
-                kotlinx.coroutines.delay(3000)
+                delay(3000)
                 mensajeAccion = ""
             }
         }
@@ -267,7 +269,7 @@ fun PantallaPrincipalMascota(
                         texto = "Alimentar",
                         color = RosaPastel,
                         onClick = {
-                            mensajeAccion = "¡Has alimentado a tu mascota! 🍖"
+                            onNavegar(RutasMascota.Cuidar.ruta)
                         }
                     )
                     BotonAccion(
@@ -275,7 +277,7 @@ fun PantallaPrincipalMascota(
                         texto = "Jugar",
                         color = AmarilloPastel,
                         onClick = {
-                            mensajeAccion = "¡Juguemos juntos! 🎮"
+                            onNavegar(RutasMascota.MenuJuegos.ruta)
                         }
                     )
                     BotonAccion(
@@ -283,7 +285,7 @@ fun PantallaPrincipalMascota(
                         texto = "Curar",
                         color = VerdeMenta,
                         onClick = {
-                            mensajeAccion = "¡Salud mejorada! 💊"
+                            onNavegar(RutasMascota.Cuidar.ruta)
                         }
                     )
                 }
@@ -299,7 +301,7 @@ fun PantallaPrincipalMascota(
                         texto = "Tienda",
                         color = AzulPastel,
                         onClick = {
-                            mensajeAccion = "Bienvenido a la tienda 🛍️"
+                            onNavegar(RutasMascota.Personalizar.ruta)
                         }
                     )
                     BotonAccion(
@@ -307,15 +309,15 @@ fun PantallaPrincipalMascota(
                         texto = "Logros",
                         color = MoradoClaro,
                         onClick = {
-                            mensajeAccion = "Logros desbloqueados 🏆"
+                            onNavegar(RutasMascota.Logros.ruta)
                         }
                     )
                     BotonAccion(
                         icono = Icons.Default.Spa,
-                        texto = "Descansar",
+                        texto = "Evolución",
                         color = CoralPastel,
                         onClick = {
-                            mensajeAccion = "Tu mascota está descansando 😴"
+                            onNavegar(RutasMascota.Evolucion.ruta)  // 👈 CAMBIAR
                         }
                     )
                 }
