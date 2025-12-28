@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Tendencias() {
+fun Tendencias(onNext: () -> Unit = {}) {
     val amarillo = Color(0xFFFFF200)
     var vistaActual by remember { mutableStateOf("semanal") }
 
@@ -40,7 +40,7 @@ fun Tendencias() {
                     containerColor = amarillo
                 ),
                 navigationIcon = {
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = onNext) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver",
@@ -181,13 +181,13 @@ fun Tendencias() {
                             )
                         }
 
-                        Spacer(modifier = Modifier.width(12.dp)) // espacio entre icono y textos
+                        Spacer(modifier = Modifier.width(12.dp))
 
                         Column {
                             Text(
                                 "Comida",
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = 18.sp // más grande
+                                fontSize = 18.sp
                             )
                             Text(
                                 "Has excedido tu presupuesto",
@@ -199,9 +199,27 @@ fun Tendencias() {
                 }
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = onNext,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = amarillo),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    "Volver",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    fontSize = 14.sp
+                )
+            }
         }
-        }
-        }
+    }
+}
+
 @Composable
 fun GraficoBarrasSemanal() {
     val dias = listOf("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")

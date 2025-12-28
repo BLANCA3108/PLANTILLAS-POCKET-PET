@@ -14,11 +14,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.lvmh.pocketpet.pantallas.AnalisisCategoria
 import com.lvmh.pocketpet.pantallas.Calendario
+import com.lvmh.pocketpet.pantallas.Categorias
 import com.lvmh.pocketpet.pantallas.GraficosComparativo
 import com.lvmh.pocketpet.pantallas.Metas
+import com.lvmh.pocketpet.pantallas.PantallaPrincipal
 import com.lvmh.pocketpet.pantallas.Presupuestos
 import com.lvmh.pocketpet.pantallas.Proyecciones
+import com.lvmh.pocketpet.pantallas.Slide1
+import com.lvmh.pocketpet.pantallas.Slide2
+import com.lvmh.pocketpet.pantallas.Slide3
 import com.lvmh.pocketpet.pantallas.Tendencias
+import com.lvmh.pocketpet.pantallas.Transaccion
+import com.lvmh.pocketpet.pantallas.Categorias
+import com.lvmh.pocketpet.pantallas.Configuracion
+import com.lvmh.pocketpet.pantallas.Logo
+import com.lvmh.pocketpet.pantallas.MiPerfil
+
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,12 +38,21 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 //Tendencias()
-               //Metas()
-               Presupuestos()
+                //Metas()
+                //Presupuestos()
                 //AnalisisCategoria()
-                //Calendario()
-                //Proyecciones()}
+                Calendario()
+                //Proyecciones()
                 //GraficosComparativo()
+                // Slide1()
+                //Slide2()
+                //Slide3()
+                //PantallaPrincipal()
+                Transaccion()
+                // Categorias(onBack = { })
+                //Configuracion(onBack = { }, onNext = { })
+                //MiPerfil(onBack = { })
+                //Logo()
             }
         }
     }
