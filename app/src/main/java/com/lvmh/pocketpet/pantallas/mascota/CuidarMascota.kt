@@ -23,7 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.mascotafinanciera.ui.theme.*
+import com.lvmh.pocketpet.presentacion.tema.*
 import kotlinx.coroutines.delay
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.Spring
@@ -41,7 +41,9 @@ data class AccionCuidado(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaCuidarMascota() {
+fun PantallaCuidarMascota(
+onVolver: () -> Unit = {}
+) {
     var saludActual by remember { mutableStateOf(75) }
     var mostrarEfecto by remember { mutableStateOf(false) }
     var accionActual by remember { mutableStateOf("") }
@@ -148,7 +150,7 @@ fun PantallaCuidarMascota() {
                     titleContentColor = Color.White
                 ),
                 navigationIcon = {
-                    IconButton(onClick = { /* Volver */ }) {
+                    IconButton(onClick = onVolver) {
                         Icon(
                             Icons.Default.ArrowBack,
                             contentDescription = "Volver",
@@ -158,12 +160,7 @@ fun PantallaCuidarMascota() {
                 }
             )
         },
-        bottomBar = {
-            BarraNavegacionInferior(
-                pantalla_seleccionada = pantalla_seleccionada,
-                onPantallaSeleccionada = { pantalla_seleccionada = it }
-            )
-        }
+
     ) { paddingValues ->
         Column(
             modifier = Modifier

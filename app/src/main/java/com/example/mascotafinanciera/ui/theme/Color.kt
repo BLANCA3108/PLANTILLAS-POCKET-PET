@@ -24,7 +24,7 @@ val GrisClaro = Color(0xFFDFE6E9)
 val GrisBackground = Color(0xFFF5F6FA)
 val FondoBlanco = Color(0xFFFFFFFF)
 val FondoApp = Color(0xFFF8F9FA)
-
+val NaranjaPastel = Color( color = 0xFFFFB347 )
 object EstadoMascotaColores {
     val Critico = CoralPastel
     val Alerta = AmarilloPastel
@@ -47,4 +47,21 @@ object AccionColores {
     val Rojo = CoralPastel
     val Morado = MoradoPrincipal
     val Azul = AzulHeader
+}
+fun obtenerColorSalud(salud: Int): Color {
+    return when {
+        salud >= 80 -> VerdeMenta
+        salud >= 50 -> AmarilloPastel
+        salud >= 30 -> NaranjaPastel
+        else -> CoralPastel
+    }
+}
+
+fun obtenerEmojiMascota(salud: Int): String {
+    return when {
+        salud >= 80 -> "😊"
+        salud >= 50 -> "🙂"
+        salud >= 30 -> "😐"
+        else -> "😢"
+    }
 }
