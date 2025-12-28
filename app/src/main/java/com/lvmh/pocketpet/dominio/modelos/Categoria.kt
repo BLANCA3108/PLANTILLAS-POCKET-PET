@@ -1,0 +1,26 @@
+package com.lvmh.pocketpet.dominio.modelos
+
+data class Categoria(
+    val id: String = "",
+    val usuarioId: String = "",
+    val nombre: String = "",
+    val emoji: String = "🍔",
+    val color: String = "#FF6B6B",
+    val tipo: TipoCategoria = TipoCategoria.GASTO,
+    val presupuestado: Double = 0.0,
+    val gastado: Double = 0.0,
+    val activa: Boolean = true,
+    val fechaCreacion: Long = System.currentTimeMillis()
+)
+{
+    val progreso: Float
+        get() = if (presupuestado > 0) (gastado / presupuestado * 100).toFloat() else 0f
+
+    val disponible: Double
+        get() = presupuestado - gastado
+}
+
+enum class TipoCategoria {
+    GASTO,
+    INGRESO
+}
