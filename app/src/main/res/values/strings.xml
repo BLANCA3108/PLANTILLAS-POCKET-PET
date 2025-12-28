@@ -1,3 +1,85 @@
 <resources>
     <string name="app_name">PocketPet</string>
+
+    <!-- Navegación -->
+    <string name="nav_inicio">Inicio</string>
+    <string name="nav_transacciones">Transacciones</string>
+    <string name="nav_estadisticas">Estadísticas</string>
+    <string name="nav_mascota">Mascota</string>
+    <string name="nav_configuracion">Configuración</string>
+
+    <!-- Autenticación -->
+    <string name="auth_login">Iniciar Sesión</string>
+    <string name="auth_register">Registrarse</string>
+    <string name="auth_email">Correo Electrónico</string>
+    <string name="auth_password">Contraseña</string>
+    <string name="auth_logout">Cerrar Sesión</string>
+
+    <!-- Transacciones -->
+    <string name="trans_ingreso">Ingreso</string>
+    <string name="trans_gasto">Gasto</string>
+    <string name="trans_agregar">Agregar Transacción</string>
+    <string name="trans_editar">Editar Transacción</string>
+    <string name="trans_eliminar">Eliminar Transacción</string>
+    <string name="trans_monto">Monto</string>
+    <string name="trans_descripcion">Descripción</string>
+    <string name="trans_categoria">Categoría</string>
+    <string name="trans_fecha">Fecha</string>
+
+    <!-- Estadísticas -->
+    <string name="stats_titulo">Estadísticas</string>
+    <string name="stats_balance">Balance</string>
+    <string name="stats_ingresos">Ingresos</string>
+    <string name="stats_gastos">Gastos</string>
+    <string name="stats_periodo">Período</string>
+    <string name="stats_semana">Semana</string>
+    <string name="stats_mes">Mes</string>
+    <string name="stats_anio">Año</string>
+
+    <!-- Presupuestos -->
+    <string name="budget_titulo">Presupuestos</string>
+    <string name="budget_agregar">Agregar Presupuesto</string>
+    <string name="budget_monto">Monto Presupuestado</string>
+    <string name="budget_gastado">Gastado</string>
+    <string name="budget_disponible">Disponible</string>
+    <string name="budget_excedido">Presupuesto Excedido</string>
+
+    <!-- Metas -->
+    <string name="goal_titulo">Metas</string>
+    <string name="goal_agregar">Agregar Meta</string>
+    <string name="goal_nombre">Nombre de la Meta</string>
+    <string name="goal_objetivo">Monto Objetivo</string>
+    <string name="goal_actual">Monto Actual</string>
+    <string name="goal_progreso">Progreso</string>
+    <string name="goal_completada">Meta Completada</string>
+
+    <!-- Mascota -->
+    <string name="pet_titulo">Mi Mascota</string>
+    <string name="pet_alimentar">Alimentar</string>
+    <string name="pet_feliz">Feliz</string>
+    <string name="pet_triste">Triste</string>
+    <string name="pet_estable">Estable</string>
+
+    <!-- Botones -->
+    <string name="btn_guardar">Guardar</string>
+    <string name="btn_cancelar">Cancelar</string>
+    <string name="btn_eliminar">Eliminar</string>
+    <string name="btn_editar">Editar</string>
+    <string name="btn_aceptar">Aceptar</string>
+
+    <!-- Mensajes -->
+    <string name="msg_cargando">Cargando...</string>
+    <string name="msg_error">Error al cargar datos</string>
+    <string name="msg_sin_datos">No hay datos disponibles</string>
+    <string name="msg_guardado_exitoso">Guardado exitosamente</string>
+
+    <!-- Categorías por defecto -->
+    <string name="cat_comida">Comida</string>
+    <string name="cat_transporte">Transporte</string>
+    <string name="cat_entretenimiento">Entretenimiento</string>
+    <string name="cat_salud">Salud</string>
+    <string name="cat_educacion">Educación</string>
+    <string name="cat_vivienda">Vivienda</string>
+    <string name="cat_servicios">Servicios</string>
+    <string name="cat_otros">Otros</string>
 </resources>
