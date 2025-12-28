@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 //Tendencias()
-                //Metas()
+                Metas()
                 //Presupuestos()
                 //AnalisisCategoria()
                 //Calendario()
@@ -46,7 +46,7 @@ class MainActivity : ComponentActivity() {
                 //GraficosComparativo()
                 // Slide1()
                 //Slide2()
-                //Slide3()
+                Slide3()
                 //PantallaPrincipal()
                 //Transaccion()
                 // Categorias(onBack = { })
