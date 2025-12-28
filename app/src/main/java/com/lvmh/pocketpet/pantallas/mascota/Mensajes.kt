@@ -1,4 +1,4 @@
-package com.example.mascotafinanciera.pantallas.mascota
+package com.lvmh.pocketpet.pantallas.mascota
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -22,7 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.mascotafinanciera.ui.theme.*
+import com.lvmh.pocketpet.presentacion.tema.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -46,12 +46,14 @@ enum class TipoMensaje(val titulo: String, val color: Color, val icono: String) 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaMensajes() {
-    var pantalla_seleccionada by remember { mutableStateOf(1) }
+fun PantallaMensajes(
+    onVolver: () -> Unit = {}
+) {
     var filtroSeleccionado by remember { mutableStateOf<TipoMensaje?>(null) }
 
     val saludActual = 75
     val nombreMascota = "FinanPet"
+
     val infiniteTransition = rememberInfiniteTransition(label = "animacion")
     val escala by infiniteTransition.animateFloat(
         initialValue = 1f,
@@ -122,7 +124,6 @@ fun PantallaMensajes() {
         )
     }
 
-    // Filtrar mensajes
     val mensajesFiltrados = if (filtroSeleccionado != null) {
         mensajes.filter { it.tipo == filtroSeleccionado }
     } else {
@@ -145,7 +146,7 @@ fun PantallaMensajes() {
                     titleContentColor = Color.White
                 ),
                 navigationIcon = {
-                    IconButton(onClick = { /* Volver */ }) {
+                    IconButton(onClick = onVolver) {
                         Icon(
                             Icons.Default.ArrowBack,
                             contentDescription = "Volver",
@@ -169,7 +170,7 @@ fun PantallaMensajes() {
                                 }
                             }
                         ) {
-                            IconButton(onClick = { /* Marcar todos como leídos */ }) {
+                            IconButton(onClick = {}) {
                                 Icon(
                                     Icons.Default.MarkEmailRead,
                                     contentDescription = "Marcar leídos",
@@ -179,12 +180,6 @@ fun PantallaMensajes() {
                         }
                     }
                 }
-            )
-        },
-        bottomBar = {
-            BarraNavegacionInferior(
-                pantalla_seleccionada = pantalla_seleccionada,
-                onPantallaSeleccionada = { pantalla_seleccionada = it }
             )
         }
     ) { paddingValues ->
@@ -355,7 +350,6 @@ fun TarjetaMensaje(mensaje: MensajeMascota) {
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                // Header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -368,7 +362,6 @@ fun TarjetaMensaje(mensaje: MensajeMascota) {
                         color = GrisTexto
                     )
 
-                    // Badge de no leído
                     if (!mensaje.leido) {
                         Surface(
                             shape = CircleShape,
@@ -433,7 +426,7 @@ fun formatearFecha(timestamp: Long): String {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewPantallaMensajes() {
-    MascotaFinancieraTheme {
+    PocketPetTema {
         PantallaMensajes()
     }
 }

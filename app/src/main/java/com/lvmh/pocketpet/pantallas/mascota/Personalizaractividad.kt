@@ -1,4 +1,4 @@
-package com.example.mascotafinanciera.pantallas.mascota
+package com.lvmh.pocketpet.pantallas.mascota
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
@@ -11,10 +11,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -25,13 +23,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.mascotafinanciera.ui.theme.*
+import com.lvmh.pocketpet.presentacion.tema.*
+import androidx.compose.ui.graphics.graphicsLayer
 
 data class MascotaPersonalizada(
     val tipo: String = "🐶",
@@ -67,7 +65,9 @@ enum class CategoriaPersonalizacion {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaPersonalizarMascota() {
+fun PantallaPersonalizarMascota(
+    onVolver: () -> Unit = {}
+) {
     var mascotaActual by remember { mutableStateOf(MascotaPersonalizada()) }
     var categoriaSeleccionada by remember { mutableStateOf(CategoriaPersonalizacion.MASCOTAS) }
     var monedasDisponibles by remember { mutableStateOf(850) }
@@ -99,7 +99,7 @@ fun PantallaPersonalizarMascota() {
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = { /* Volver */ }) {
+                    IconButton(onClick = onVolver) {
                         Icon(
                             Icons.Default.ArrowBack,
                             contentDescription = "Volver",
@@ -149,11 +149,14 @@ fun PantallaPersonalizarMascota() {
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+
             CategoriasPersonalizacion(
                 categoriaSeleccionada = categoriaSeleccionada,
                 onCategoriaSeleccionada = { categoriaSeleccionada = it }
             )
+
             Spacer(modifier = Modifier.height(12.dp))
+
             GridItems(
                 categoria = categoriaSeleccionada,
                 mascotaActual = mascotaActual,
@@ -179,7 +182,6 @@ fun PantallaPersonalizarMascota() {
         )
     }
 
-    // Diálogo de compra
     mostrarDialogoCompra?.let { item ->
         DialogoCompra(
             item = item,
@@ -420,7 +422,9 @@ fun TarjetaItem(
                 Text(
                     text = item.emoji,
                     fontSize = 40.sp,
-                    modifier = Modifier.alpha(if (item.desbloqueado) 1f else 0.4f)
+                    modifier = Modifier.graphicsLayer(
+                        alpha = if (item.desbloqueado) 1f else 0.4f
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -701,7 +705,7 @@ fun obtenerItemsPorCategoria(categoria: CategoriaPersonalizacion): List<ItemTien
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewPersonalizar() {
-    MascotaFinancieraTheme {
+    PocketPetTema {
         PantallaPersonalizarMascota()
     }
 }

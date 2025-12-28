@@ -1,4 +1,4 @@
-package com.example.mascotafinanciera.pantallas.mascota
+package com.lvmh.pocketpet.pantallas.mascota
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -16,11 +16,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.mascotafinanciera.ui.theme.*
+import com.lvmh.pocketpet.presentacion.tema.*
 
 data class Desafio(
     val id: String,
@@ -44,8 +43,9 @@ enum class DificultadDesafio(val titulo: String, val color: Color) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaDesafios() {
-    var pantalla_seleccionada by remember { mutableStateOf(1) }
+fun PantallaDesafios(
+    onVolver: () -> Unit = {}
+) {
     var tabSeleccionada by remember { mutableStateOf(0) }
 
     val desafios = remember {
@@ -120,8 +120,6 @@ fun PantallaDesafios() {
 
     val desafiosActivos = desafios.filter { !it.completado }
     val desafiosCompletados = desafios.filter { it.completado }
-
-    // Estadísticas
     val totalRecompensas = desafiosCompletados.sumOf { it.recompensaXP }
     val desafiosRestantes = desafiosActivos.size
 
@@ -139,7 +137,7 @@ fun PantallaDesafios() {
                     titleContentColor = Color.White
                 ),
                 navigationIcon = {
-                    IconButton(onClick = { /* Volver */ }) {
+                    IconButton(onClick = onVolver) {
                         Icon(
                             Icons.Default.ArrowBack,
                             contentDescription = "Volver",
@@ -147,12 +145,6 @@ fun PantallaDesafios() {
                         )
                     }
                 }
-            )
-        },
-        bottomBar = {
-            BarraNavegacionInferior(
-                pantalla_seleccionada = pantalla_seleccionada,
-                onPantallaSeleccionada = { pantalla_seleccionada = it }
             )
         }
     ) { paddingValues ->
@@ -351,7 +343,6 @@ fun TarjetaDesafio(desafio: Desafio) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                // Emoji e Info
                 Row(
                     modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically
@@ -445,7 +436,7 @@ fun TarjetaDesafio(desafio: Desafio) {
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 LinearProgressIndicator(
-                    progress = desafio.progreso.toFloat() / desafio.meta.toFloat(),
+                    progress = { desafio.progreso.toFloat() / desafio.meta.toFloat() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(8.dp)
@@ -506,7 +497,7 @@ fun RecompensaChip(icono: ImageVector, texto: String, color: Color) {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewPantallaDesafios() {
-    MascotaFinancieraTheme {
+    PocketPetTema {
         PantallaDesafios()
     }
 }

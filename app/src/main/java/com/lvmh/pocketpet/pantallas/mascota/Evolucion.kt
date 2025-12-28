@@ -1,4 +1,4 @@
-package com.example.mascotafinanciera.pantallas.mascota
+package com.lvmh.pocketpet.pantallas.mascota
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.example.mascotafinanciera.ui.theme.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontStyle
 
 data class NivelMascota(
     val nivel: Int,
@@ -213,7 +214,7 @@ fun PantallaEvolucion() {
                         fontSize = 14.sp,
                         color = GrisMedio,
                         textAlign = TextAlign.Center,
-                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                        fontStyle = FontStyle.Italic
                     )
                 }
             }

@@ -1,4 +1,4 @@
-package com.example.mascotafinanciera.pantallas.mascota
+package com.lvmh.pocketpet.pantallas.mascota
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -15,11 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.mascotafinanciera.ui.theme.*
+import com.lvmh.pocketpet.presentacion.tema.*  // 👈 CORREGIDO
 import androidx.compose.ui.graphics.graphicsLayer
 
 data class Logro(
@@ -52,8 +51,9 @@ enum class RarezaLogro(val titulo: String, val emoji: String, val color: Color) 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaLogros() {
-    var pantalla_seleccionada by remember { mutableStateOf(1) }
+fun PantallaLogros(
+    onVolver: () -> Unit = {}
+) {
     var filtroSeleccionado by remember { mutableStateOf<CategoriaLogro?>(null) }
 
     val logros = remember {
@@ -88,7 +88,6 @@ fun PantallaLogros() {
                 categoria = CategoriaLogro.AHORRO,
                 rareza = RarezaLogro.RARO
             ),
-
             Logro(
                 id = "racha_7",
                 titulo = "Semana Perfecta",
@@ -174,7 +173,7 @@ fun PantallaLogros() {
                     titleContentColor = Color.White
                 ),
                 navigationIcon = {
-                    IconButton(onClick = { /* Volver */ }) {
+                    IconButton(onClick = onVolver) {
                         Icon(
                             Icons.Default.ArrowBack,
                             contentDescription = "Volver",
@@ -182,12 +181,6 @@ fun PantallaLogros() {
                         )
                     }
                 }
-            )
-        },
-        bottomBar = {
-            BarraNavegacionInferior(
-                pantalla_seleccionada = pantalla_seleccionada,
-                onPantallaSeleccionada = { pantalla_seleccionada = it }
             )
         }
     ) { paddingValues ->
@@ -197,6 +190,7 @@ fun PantallaLogros() {
                 .padding(paddingValues)
                 .background(FondoApp)
         ) {
+            // Estadísticas principales
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -214,23 +208,32 @@ fun PantallaLogros() {
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
                     EstadisticaLogro("🏅", "$logrosDesbloqueados/$totalLogros", "Logros")
+
                     Divider(
                         modifier = Modifier
                             .height(50.dp)
                             .width(1.dp),
                         color = GrisClaro
                     )
+
                     EstadisticaLogro("⭐", "$puntosTotal", "Puntos")
+
                     Divider(
                         modifier = Modifier
                             .height(50.dp)
                             .width(1.dp),
                         color = GrisClaro
                     )
-                    EstadisticaLogro("📊", "${(logrosDesbloqueados * 100) / totalLogros}%", "Progreso")
+
+                    EstadisticaLogro(
+                        "📊",
+                        "${(logrosDesbloqueados * 100) / totalLogros}%",
+                        "Progreso"
+                    )
                 }
             }
 
+            // Filtros
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -260,6 +263,7 @@ fun PantallaLogros() {
                 }
             }
 
+            // Lista de logros
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -308,7 +312,10 @@ fun TarjetaLogro(logro: Logro) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (logro.desbloqueado) Color.White else Color.White.copy(alpha = 0.6f)
+            containerColor = if (logro.desbloqueado)
+                Color.White
+            else
+                Color.White.copy(alpha = 0.6f)
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = if (logro.desbloqueado) 4.dp else 2.dp
@@ -343,6 +350,7 @@ fun TarjetaLogro(logro: Logro) {
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
+
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = logro.titulo,
@@ -388,7 +396,7 @@ fun TarjetaLogro(logro: Logro) {
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         LinearProgressIndicator(
-                            progress = logro.progreso.toFloat() / logro.progresoMax.toFloat(),
+                            progress = { logro.progreso.toFloat() / logro.progresoMax.toFloat() },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(6.dp)
@@ -438,10 +446,11 @@ fun TarjetaLogro(logro: Logro) {
 fun Modifier.alpha(alpha: Float): Modifier = this.then(
     Modifier.graphicsLayer(alpha = alpha)
 )
+
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewPantallaLogros() {
-    MascotaFinancieraTheme {
+    PocketPetTema {
         PantallaLogros()
     }
 }
