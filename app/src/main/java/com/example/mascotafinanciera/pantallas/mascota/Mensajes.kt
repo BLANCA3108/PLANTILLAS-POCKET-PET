@@ -50,11 +50,8 @@ fun PantallaMensajes() {
     var pantalla_seleccionada by remember { mutableStateOf(1) }
     var filtroSeleccionado by remember { mutableStateOf<TipoMensaje?>(null) }
 
-    // Estado de la mascota
     val saludActual = 75
     val nombreMascota = "FinanPet"
-
-    // Animación de la mascota
     val infiniteTransition = rememberInfiniteTransition(label = "animacion")
     val escala by infiniteTransition.animateFloat(
         initialValue = 1f,
@@ -66,7 +63,6 @@ fun PantallaMensajes() {
         label = "escala"
     )
 
-    // Mensajes de ejemplo
     val mensajes = remember {
         listOf(
             MensajeMascota(
@@ -158,7 +154,6 @@ fun PantallaMensajes() {
                     }
                 },
                 actions = {
-                    // Badge de mensajes no leídos
                     if (mensajesNoLeidos > 0) {
                         BadgedBox(
                             badge = {
