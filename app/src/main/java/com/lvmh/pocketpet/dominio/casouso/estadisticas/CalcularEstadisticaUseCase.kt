@@ -1,27 +1,37 @@
 package com.lvmh.pocketpet.dominio.casouso.estadisticas
 
-import com.lvmh.pocketpet.datos.repositorios.TransactionRepository
-import com.lvmh.pocketpet.dominio.modelos.Transaction
+import com.lvmh.pocketpet.datos.repositorios.TransaccionRepository
+import com.lvmh.pocketpet.dominio.modelos.Transaccion
+import com.lvmh.pocketpet.dominio.modelos.TipoTransaccion
 import kotlinx.coroutines.flow.first
 
 data class Estadisticas(
     val totalIngresos: Double,
     val totalGastos: Double,
     val balance: Double,
-    val transaccionMasAlta: Transaction?,
+    val transaccionMasAlta: Transaccion?,
     val categoriaConMasGastos: String,
     val promedioGastoDiario: Double
 )
 
 class CalcularEstadisticasUseCase(
-    private val transactionRepository: TransactionRepository
+    private val transaccionRepository: TransaccionRepository
 ) {
 
-    suspend operator fun invoke(usuarioId: String, mesInicio: Long, mesFin: Long): Estadisticas {
-        val transacciones = transactionRepository.obtenerPorRangoFecha(usuarioId, mesInicio, mesFin).first()
+    suspend operator fun invoke(
+        usuarioId: String,
+        mesInicio: Long,
+        mesFin: Long
+    ): Estadisticas {
 
-        val ingresos = transacciones.filter { it.tipo == "ingreso" }
-        val gastos = transacciones.filter { it.tipo == "gasto" }
+        val transacciones =
+            transaccionRepository
+                .obtenerTransaccionesPorRangoFecha(usuarioId, mesInicio, mesFin)
+                .first()
+
+        val ingresos = transacciones.filter { it.tipo == TipoTransaccion.INGRESO }
+        val gastos   = transacciones.filter { it.tipo == TipoTransaccion.GASTO }
+
 
         val totalIngresos = ingresos.sumOf { it.monto }
         val totalGastos = gastos.sumOf { it.monto }
@@ -34,16 +44,19 @@ class CalcularEstadisticasUseCase(
             .maxByOrNull { it.value.sumOf { t -> t.monto } }
             ?.key ?: ""
 
-        val dias = ((mesFin - mesInicio) / (1000 * 60 * 60 * 24)).toInt().coerceAtLeast(1)
+        val dias = ((mesFin - mesInicio) / (1000 * 60 * 60 * 24))
+            .toInt()
+            .coerceAtLeast(1)
+
         val promedioGastoDiario = totalGastos / dias
 
         return Estadisticas(
-            totalIngresos = totalIngresos,
-            totalGastos = totalGastos,
-            balance = balance,
-            transaccionMasAlta = transaccionMasAlta,
-            categoriaConMasGastos = categoriaConMasGastos,
-            promedioGastoDiario = promedioGastoDiario
+            totalIngresos,
+            totalGastos,
+            balance,
+            transaccionMasAlta,
+            categoriaConMasGastos,
+            promedioGastoDiario
         )
     }
 }

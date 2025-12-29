@@ -22,10 +22,6 @@ fun PantallaComparativos(
 ) {
     val estado by viewModel.estado.collectAsState()
 
-    LaunchedEffect(Unit) {
-        viewModel.compararPeriodos()
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -48,6 +44,7 @@ fun PantallaComparativos(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+
             item {
                 Text(
                     text = "Comparación Periodo Actual vs Anterior",
@@ -56,6 +53,7 @@ fun PantallaComparativos(
             }
 
             estado.comparacion?.let { comp ->
+
                 item {
                     TarjetaComparativaDetallada(
                         titulo = "Ingresos",
@@ -79,8 +77,10 @@ fun PantallaComparativos(
                 }
 
                 item {
-                    val balanceActual = comp.periodoActualIngresos - comp.periodoActualGastos
-                    val balanceAnterior = comp.periodoAnteriorIngresos - comp.periodoAnteriorGastos
+                    val balanceActual =
+                        comp.periodoActualIngresos - comp.periodoActualGastos
+                    val balanceAnterior =
+                        comp.periodoAnteriorIngresos - comp.periodoAnteriorGastos
                     val cambioBalance = balanceActual - balanceAnterior
 
                     TarjetaComparativaDetallada(
@@ -88,9 +88,19 @@ fun PantallaComparativos(
                         valorActual = balanceActual,
                         valorAnterior = balanceAnterior,
                         cambio = cambioBalance,
-                        cambioPorc = if (balanceAnterior != 0.0) (cambioBalance / balanceAnterior) * 100 else 0.0,
+                        cambioPorc = if (balanceAnterior != 0.0)
+                            (cambioBalance / balanceAnterior) * 100 else 0.0,
                         color = Color(0xFF3B82F6)
                     )
+                }
+            } ?: item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
             }
 
@@ -139,6 +149,7 @@ private fun TarjetaComparativaDetallada(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+
             Text(
                 text = titulo,
                 style = MaterialTheme.typography.titleMedium
@@ -150,11 +161,11 @@ private fun TarjetaComparativaDetallada(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+
                 Column {
                     Text(
                         text = "Actual",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.bodySmall
                     )
                     Text(
                         text = "$${String.format("%.2f", valorActual)}",
@@ -166,21 +177,17 @@ private fun TarjetaComparativaDetallada(
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = "Anterior",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.bodySmall
                     )
                     Text(
                         text = "$${String.format("%.2f", valorAnterior)}",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.titleLarge
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-
             HorizontalDivider()
-
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(
@@ -188,21 +195,22 @@ private fun TarjetaComparativaDetallada(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Cambio",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+
+                Text(text = "Cambio")
 
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = "${if (cambio >= 0) "+" else ""}$${String.format("%.2f", cambio)}",
                         style = MaterialTheme.typography.titleMedium,
-                        color = if (cambio >= 0) Color(0xFF10B981) else Color(0xFFEF4444)
+                        color = if (cambio >= 0)
+                            Color(0xFF10B981) else Color(0xFFEF4444)
                     )
+
                     Text(
                         text = "${if (cambioPorc >= 0) "+" else ""}${String.format("%.1f", cambioPorc)}%",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (cambioPorc >= 0) Color(0xFF10B981) else Color(0xFFEF4444)
+                        color = if (cambioPorc >= 0)
+                            Color(0xFF10B981) else Color(0xFFEF4444)
                     )
                 }
             }

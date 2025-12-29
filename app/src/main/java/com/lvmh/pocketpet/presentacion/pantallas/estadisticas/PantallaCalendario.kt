@@ -1,7 +1,5 @@
 package com.lvmh.pocketpet.presentacion.pantallas.estadisticas
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -18,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.lvmh.pocketpet.dominio.casouso.estadisticas.ReporteMensual
 import com.lvmh.pocketpet.presentacion.viewmodels.EstadisticasViewModel
 import java.util.*
 
@@ -25,6 +24,7 @@ import java.util.*
 @Composable
 fun PantallaCalendario(
     viewModel: EstadisticasViewModel,
+    usuarioId: String,
     alRegresar: () -> Unit
 ) {
     val estado by viewModel.estado.collectAsState()
@@ -32,23 +32,21 @@ fun PantallaCalendario(
 
     LaunchedEffect(mesActual) {
         viewModel.cargarReporteMensual(
-            mesActual.get(Calendar.MONTH) + 1,
-            mesActual.get(Calendar.YEAR)
+            usuarioId = usuarioId,
+            mes = mesActual.get(Calendar.MONTH) + 1,
+            anio = mesActual.get(Calendar.YEAR)
         )
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Calendario") },
+                title = { Text("Calendario financiero") },
                 navigationIcon = {
                     IconButton(onClick = alRegresar) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Regresar")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                }
             )
         }
     ) { padding ->
@@ -58,6 +56,7 @@ fun PantallaCalendario(
                 .padding(padding)
                 .padding(16.dp)
         ) {
+
             SelectorMes(
                 mesActual = mesActual,
                 alCambiarMes = { mesActual = it }
@@ -65,16 +64,29 @@ fun PantallaCalendario(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            estado.reporteMensual?.let { reporte ->
-                CalendarioMensual(
-                    reporte = reporte,
-                    mesActual = mesActual
-                )
-            } ?: Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
+            when {
+                estado.cargando -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                estado.reporteMensual != null -> {
+                    CalendarioMensual(
+                        reporte = estado.reporteMensual!!,
+                        mesActual = mesActual
+                    )
+                }
+
+                estado.error != null -> {
+                    Text(
+                        text = estado.error ?: "Error desconocido",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }
@@ -91,10 +103,7 @@ private fun SelectorMes(
     )
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
@@ -103,6 +112,7 @@ private fun SelectorMes(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+
             IconButton(onClick = {
                 val nuevoMes = mesActual.clone() as Calendar
                 nuevoMes.add(Calendar.MONTH, -1)
@@ -130,32 +140,31 @@ private fun SelectorMes(
 
 @Composable
 private fun CalendarioMensual(
-    reporte: com.lvmh.pocketpet.dominio.casouso.estadisticas.ReporteMensual,
+    reporte: ReporteMensual,
     mesActual: Calendar
 ) {
     val diasSemana = listOf("D", "L", "M", "M", "J", "V", "S")
 
-    val primerDia = (mesActual.clone() as Calendar).apply {
+    val primerDiaMes = (mesActual.clone() as Calendar).apply {
         set(Calendar.DAY_OF_MONTH, 1)
     }
+
     val diasEnMes = mesActual.getActualMaximum(Calendar.DAY_OF_MONTH)
-    val primerDiaSemana = primerDia.get(Calendar.DAY_OF_WEEK) - 1
+    val primerDiaSemana = primerDiaMes.get(Calendar.DAY_OF_WEEK) - 1
 
     Column {
+
         LazyVerticalGrid(
             columns = GridCells.Fixed(7),
-            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
+
             items(diasSemana) { dia ->
                 Text(
                     text = dia,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -173,10 +182,7 @@ private fun CalendarioMensual(
         Spacer(modifier = Modifier.height(16.dp))
 
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+            modifier = Modifier.fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier
@@ -185,26 +191,20 @@ private fun CalendarioMensual(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text(
-                        text = "Ingresos",
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Text("Ingresos")
                     Text(
                         text = "$${String.format("%.2f", reporte.totalIngresos)}",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color(0xFF10B981)
+                        color = Color(0xFF10B981),
+                        fontWeight = FontWeight.Bold
                     )
                 }
 
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "Gastos",
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Text("Gastos")
                     Text(
                         text = "$${String.format("%.2f", reporte.totalGastos)}",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color(0xFFEF4444)
+                        color = Color(0xFFEF4444),
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -213,7 +213,10 @@ private fun CalendarioMensual(
 }
 
 @Composable
-private fun CeldaDia(dia: Int, monto: Double) {
+private fun CeldaDia(
+    dia: Int,
+    monto: Double
+) {
     val color = when {
         monto > 0 -> Color(0xFFD1FAE5)
         monto < 0 -> Color(0xFFFEE2E2)
@@ -227,22 +230,20 @@ private fun CeldaDia(dia: Int, monto: Double) {
         colors = CardDefaults.cardColors(containerColor = color)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(4.dp),
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Text(
                 text = dia.toString(),
-                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold
             )
+
             if (monto != 0.0) {
                 Text(
                     text = "$${String.format("%.0f", kotlin.math.abs(monto))}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (monto > 0) Color(0xFF10B981) else Color(0xFFEF4444)
+                    color = if (monto > 0) Color(0xFF10B981) else Color(0xFFEF4444),
+                    style = MaterialTheme.typography.labelSmall
                 )
             }
         }

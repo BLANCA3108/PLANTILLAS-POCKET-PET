@@ -6,9 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
-
-
-// ========== RUTAS ==========
+// ================== RUTAS ==================
 sealed class RutasMascota(val ruta: String) {
     object Principal : RutasMascota("mascota_principal")
     object Cuidar : RutasMascota("mascota_cuidar")
@@ -25,6 +23,7 @@ sealed class RutasMascota(val ruta: String) {
     object AtrapaMonedas : RutasMascota("juego_atrapamonedas")
 }
 
+// ================== NAVEGACIÓN ==================
 @Composable
 fun NavegacionMascota(
     navController: NavHostController = rememberNavController()
@@ -33,82 +32,87 @@ fun NavegacionMascota(
         navController = navController,
         startDestination = RutasMascota.Principal.ruta
     ) {
-        // ========== PANTALLA PRINCIPAL ==========
+
+        // ===== PANTALLA PRINCIPAL =====
         composable(RutasMascota.Principal.ruta) {
             PantallaPrincipalMascota(
-                onNavegar = { ruta -> navController.navigate(ruta) }
+                onNavegar = { ruta ->
+                    navController.navigate(ruta)
+                }
             )
         }
 
-        // ========== CUIDAR MASCOTA ==========
+        // ===== CUIDAR MASCOTA =====
         composable(RutasMascota.Cuidar.ruta) {
             PantallaCuidarMascota(
-                onVolver = { navController.popBackStack() }
+                onVolver = {
+                    navController.popBackStack()
+                }
             )
         }
 
-        // ========== LOGROS ==========
+        // ===== LOGROS =====
         composable(RutasMascota.Logros.ruta) {
             PantallaLogros(
                 onVolver = { navController.popBackStack() }
             )
         }
 
-        // ========== DESAFÍOS ==========
+        // ===== DESAFÍOS =====
         composable(RutasMascota.Desafios.ruta) {
             PantallaDesafios(
                 onVolver = { navController.popBackStack() }
             )
         }
 
-        // ========== EVOLUCIÓN ==========
+        // ===== EVOLUCIÓN =====
         composable(RutasMascota.Evolucion.ruta) {
             PantallaEvolucion(
                 onVolver = { navController.popBackStack() }
             )
         }
 
-        // ========== MENSAJES ==========
+        // ===== MENSAJES =====
         composable(RutasMascota.Mensajes.ruta) {
             PantallaMensajes(
                 onVolver = { navController.popBackStack() }
             )
         }
 
-        // ========== DIARIO FINANCIERO ==========
+        // ===== DIARIO (pendiente) =====
         composable(RutasMascota.Diario.ruta) {
             // PantallaDiario(
             //     onVolver = { navController.popBackStack() }
             // )
         }
 
-        // ========== PERSONALIZAR ==========
+        // ===== PERSONALIZAR (pendiente) =====
         composable(RutasMascota.Personalizar.ruta) {
             // PantallaPersonalizar(
             //     onVolver = { navController.popBackStack() }
             // )
         }
 
-        // ========== HABITACIÓN ==========
+        // ===== HABITACIÓN (pendiente) =====
         composable(RutasMascota.Habitacion.ruta) {
             // PantallaHabitacion(
             //     onVolver = { navController.popBackStack() }
             // )
         }
 
-        // ========== ESTADÍSTICAS ==========
+        // ===== ESTADÍSTICAS (pendiente) =====
         composable(RutasMascota.Estadisticas.ruta) {
             // PantallaEstadisticas(
             //     onVolver = { navController.popBackStack() }
             // )
         }
 
-        // ========== MENÚ DE JUEGOS ==========
+        // ===== MENÚ DE JUEGOS (pendiente) =====
         composable(RutasMascota.MenuJuegos.ruta) {
             // PantallaMenuJuegos(
             //     onVolver = { navController.popBackStack() },
             //     onJuegoSeleccionado = { juego ->
-            //         when(juego) {
+            //         when (juego) {
             //             "buscaminas" -> navController.navigate(RutasMascota.BuscaMinas.ruta)
             //             "atrapamonedas" -> navController.navigate(RutasMascota.AtrapaMonedas.ruta)
             //         }
@@ -116,14 +120,14 @@ fun NavegacionMascota(
             // )
         }
 
-        // ========== JUEGO: BUSCA MINAS ==========
+        // ===== JUEGO: BUSCA MINAS =====
         composable(RutasMascota.BuscaMinas.ruta) {
             // JuegoBuscaMinas(
             //     onVolver = { navController.popBackStack() }
             // )
         }
 
-        // ========== JUEGO: ATRAPA MONEDAS ==========
+        // ===== JUEGO: ATRAPA MONEDAS =====
         composable(RutasMascota.AtrapaMonedas.ruta) {
             // JuegoAtrapaMonedas(
             //     onVolver = { navController.popBackStack() }

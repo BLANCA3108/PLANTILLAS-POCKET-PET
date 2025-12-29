@@ -44,6 +44,7 @@ fun PantallaEstadisticas(
                     CircularProgressIndicator()
                 }
             }
+
             estado.error != null -> {
                 Box(
                     modifier = Modifier
@@ -54,10 +55,11 @@ fun PantallaEstadisticas(
                     Text(text = estado.error ?: "Error desconocido")
                 }
             }
+
             else -> {
                 ContenidoEstadisticas(
                     estado = estado,
-                    alCambiarPeriodo = { viewModel.cambiarPeriodo(it) },
+                    alCambiarPeriodo = { },
                     alNavegar = alNavegar,
                     modificador = Modifier.padding(padding)
                 )
@@ -79,6 +81,7 @@ private fun ContenidoEstadisticas(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+
         item {
             SelectorPeriodo(
                 periodoSeleccionado = estado.periodoSeleccionado,
@@ -94,6 +97,7 @@ private fun ContenidoEstadisticas(
         }
 
         estado.estadisticas?.let { stats ->
+
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -139,11 +143,14 @@ private fun ContenidoEstadisticas(
                         Icon(
                             Icons.Default.AccountBalance,
                             contentDescription = null,
-                            tint = if (stats.balance >= 0) Color(0xFF3B82F6) else Color(0xFFEF4444)
+                            tint = if (stats.balance >= 0)
+                                Color(0xFF3B82F6) else Color(0xFFEF4444)
                         )
                     },
-                    colorFondo = if (stats.balance >= 0) Color(0xFFDBEAFE) else Color(0xFFFEE2E2),
-                    colorTexto = if (stats.balance >= 0) Color(0xFF1E40AF) else Color(0xFF991B1B)
+                    colorFondo = if (stats.balance >= 0)
+                        Color(0xFFDBEAFE) else Color(0xFFFEE2E2),
+                    colorTexto = if (stats.balance >= 0)
+                        Color(0xFF1E40AF) else Color(0xFF991B1B)
                 )
             }
         }
@@ -182,6 +189,7 @@ private fun ContenidoEstadisticas(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+
                 OutlinedButton(
                     onClick = { alNavegar("categorias_estadisticas") },
                     modifier = Modifier.weight(1f)
