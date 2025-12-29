@@ -14,8 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.lvmh.pocketpet.dominio.modelos.Presupuesto
-import com.lvmh.pocketpet.presentacion.componentes.BarraProgresoPersonalizada
 import com.lvmh.pocketpet.presentacion.viewmodels.PresupuestoViewModel
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,6 +25,11 @@ fun PantallaPresupuestos(
 ) {
     val estado by viewModel.estado.collectAsState()
     var mostrarDialogo by remember { mutableStateOf(false) }
+
+    // Inicializar con un userId temporal
+    LaunchedEffect(Unit) {
+        viewModel.establecerUsuario("usuario_temp")
+    }
 
     Scaffold(
         topBar = {
@@ -46,28 +51,57 @@ fun PantallaPresupuestos(
             }
         }
     ) { padding ->
-        if (estado.presupuestos.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("No hay presupuestos. Agrega uno nuevo.")
+        when {
+            estado.cargando && estado.presupuestos.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(estado.presupuestos) { presupuesto ->
-                    TarjetaPresupuesto(
-                        presupuesto = presupuesto,
-                        alEliminar = { viewModel.eliminarPresupuesto(presupuesto) }
+
+            estado.error != null -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = estado.error ?: "Error desconocido",
+                        color = MaterialTheme.colorScheme.error
                     )
+                }
+            }
+
+            estado.presupuestos.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No hay presupuestos. Agrega uno nuevo.")
+                }
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(estado.presupuestos) { presupuesto ->
+                        TarjetaPresupuesto(
+                            presupuesto = presupuesto,
+                            alEliminar = { viewModel.eliminarPresupuesto(presupuesto) }
+                        )
+                    }
                 }
             }
         }
@@ -114,7 +148,9 @@ private fun TarjetaPresupuesto(
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        text = "${presupuesto.periodo.capitalize()}",
+                        text = presupuesto.periodo.replaceFirstChar {
+                            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -134,15 +170,27 @@ private fun TarjetaPresupuesto(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            BarraProgresoPersonalizada(
-                progreso = (presupuesto.porcentajeGastado / 100).toFloat(),
-                colorProgreso = if (presupuesto.excedido)
+            // Barra de progreso simple
+            LinearProgressIndicator(
+                progress = (presupuesto.porcentajeGastado / 100).toFloat().coerceIn(0f, 1f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp),
+                color = if (presupuesto.excedido)
                     Color(0xFFEF4444)
                 else if (presupuesto.porcentajeGastado >= presupuesto.alertaEn)
                     Color(0xFFF59E0B)
                 else
                     Color(0xFF10B981),
-                mostrarPorcentaje = true
+                trackColor = Color(0xFFE5E7EB)
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "${presupuesto.porcentajeGastado}%",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             if (presupuesto.excedido) {
