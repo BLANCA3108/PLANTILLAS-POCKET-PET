@@ -9,21 +9,15 @@ import com.lvmh.pocketpet.presentacion.pantallas.PantallaPrincipal
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaEstadisticas
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaEstadisticasCategorias
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaTendencias
-// ✅ CORREGIDO: Import correcto
 import com.lvmh.pocketpet.pantallas.Presupuestos
 import com.lvmh.pocketpet.viewmodels.TransaccionViewModel
 import com.lvmh.pocketpet.presentacion.viewmodels.EstadisticasViewModel
 import com.lvmh.pocketpet.presentacion.viewmodels.PresupuestoViewModel
-<<<<<<< HEAD
-import com.lvmh.pocketpet.pantallas.mascota.NavegacionMascota
-=======
-// ✅ Imports para Mascota
 import com.lvmh.pocketpet.pantallas.mascota.NavegacionMascota
 import com.lvmh.pocketpet.pantallas.Logo
 import com.lvmh.pocketpet.pantallas.Slide1
 import com.lvmh.pocketpet.pantallas.Slide2
 import com.lvmh.pocketpet.pantallas.Slide3
->>>>>>> 646a81783d469519902ac93f07c36135e02a0810
 
 @Composable
 fun PocketPetNavGraph() {
@@ -31,7 +25,7 @@ fun PocketPetNavGraph() {
 
     NavHost(
         navController = navController,
-        startDestination = Routes.LOGO   // 👈 CAMBIO CLAVE
+        startDestination = Routes.LOGO
     ) {
 
         // ===============================
@@ -75,7 +69,7 @@ fun PocketPetNavGraph() {
         }
 
         // ===============================
-        // 🔹 APP PRINCIPAL (TU CÓDIGO ORIGINAL)
+        // 🔹 APP PRINCIPAL
         // ===============================
 
         composable(Routes.PRINCIPAL) {
@@ -98,15 +92,9 @@ fun PocketPetNavGraph() {
             )
         }
 
-<<<<<<< HEAD
         composable("estadisticas_categorias") {
             val viewModel: EstadisticasViewModel = hiltViewModel()
             PantallaEstadisticasCategorias(
-=======
-        composable(Routes.PRESUPUESTOS) {
-            val viewModel: PresupuestoViewModel = hiltViewModel()
-            PantallaPresupuestos(
->>>>>>> 646a81783d469519902ac93f07c36135e02a0810
                 viewModel = viewModel,
                 alRegresar = {
                     navController.popBackStack()
@@ -114,7 +102,6 @@ fun PocketPetNavGraph() {
             )
         }
 
-<<<<<<< HEAD
         composable("tendencias") {
             val viewModel: EstadisticasViewModel = hiltViewModel()
             PantallaTendencias(
@@ -125,7 +112,6 @@ fun PocketPetNavGraph() {
             )
         }
 
-        // ✅ CORREGIDO: Sin parámetro usuarioId
         composable(Routes.PRESUPUESTOS) {
             val viewModel: PresupuestoViewModel = hiltViewModel()
             Presupuestos(
@@ -136,9 +122,6 @@ fun PocketPetNavGraph() {
             )
         }
 
-=======
-        // 🔹 Mascota (NavGraph interno)
->>>>>>> 646a81783d469519902ac93f07c36135e02a0810
         composable(Routes.MASCOTA) {
             NavegacionMascota()
         }
