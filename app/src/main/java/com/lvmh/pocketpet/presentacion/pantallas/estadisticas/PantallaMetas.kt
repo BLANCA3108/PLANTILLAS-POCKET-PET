@@ -145,7 +145,8 @@ private fun TarjetaMeta(
     val formatoFecha = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
     Card(
-        onClick = if (!meta.completada) alClick else {},
+        onClick = alClick,
+        enabled = !meta.completada, // 👈 AQUÍ LA CLAVE
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = if (meta.completada)
@@ -215,7 +216,9 @@ private fun TarjetaMeta(
             Spacer(modifier = Modifier.height(8.dp))
 
             BarraProgresoPersonalizada(
-                progreso = (meta.porcentajeCompletado / 100).toFloat().coerceIn(0f, 1f),
+                progreso = (meta.porcentajeCompletado / 100)
+                    .toFloat()
+                    .coerceIn(0f, 1f),
                 colorProgreso = if (meta.completada)
                     Color(0xFF10B981)
                 else
@@ -246,6 +249,7 @@ private fun TarjetaMeta(
         }
     }
 }
+
 
 @Composable
 private fun DialogoNuevaMeta(

@@ -1,4 +1,5 @@
 package com.lvmh.pocketpet.datos.firebase.modelos
+import com.google.firebase.firestore.PropertyName
 
 data class CategoriaFirebase(
     @PropertyName("id") val id: String = "",

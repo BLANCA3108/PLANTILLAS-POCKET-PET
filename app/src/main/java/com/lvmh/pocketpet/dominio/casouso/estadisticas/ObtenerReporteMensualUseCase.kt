@@ -1,6 +1,7 @@
 package com.lvmh.pocketpet.dominio.casouso.estadisticas
 
-import com.lvmh.pocketpet.datos.repositorios.TransactionRepository
+import com.lvmh.pocketpet.datos.repositorios.TransaccionRepository
+import com.lvmh.pocketpet.dominio.modelos.TipoTransaccion
 import kotlinx.coroutines.flow.first
 import java.util.*
 
@@ -15,10 +16,15 @@ data class ReporteMensual(
 )
 
 class ObtenerReporteMensualUseCase(
-    private val transactionRepository: TransactionRepository
+    private val transaccionRepository: TransaccionRepository
 ) {
 
-    suspend operator fun invoke(usuarioId: String, mes: Int, anio: Int): ReporteMensual {
+    suspend operator fun invoke(
+        usuarioId: String,
+        mes: Int,
+        anio: Int
+    ): ReporteMensual {
+
         val calendar = Calendar.getInstance()
         calendar.set(anio, mes - 1, 1, 0, 0, 0)
         val inicio = calendar.timeInMillis
@@ -26,22 +32,35 @@ class ObtenerReporteMensualUseCase(
         calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH))
         calendar.set(Calendar.HOUR_OF_DAY, 23)
         calendar.set(Calendar.MINUTE, 59)
+        calendar.set(Calendar.SECOND, 59)
         val fin = calendar.timeInMillis
 
-        val transacciones = transactionRepository.obtenerPorRangoFecha(usuarioId, inicio, fin).first()
+        val transacciones = transaccionRepository
+            .obtenerTransaccionesPorRangoFecha(usuarioId, inicio, fin)
+            .first()
 
-        val ingresos = transacciones.filter { it.tipo == "ingreso" }
-        val gastos = transacciones.filter { it.tipo == "gasto" }
+        val ingresos = transacciones.filter { it.tipo == TipoTransaccion.INGRESO }
+        val gastos = transacciones.filter { it.tipo == TipoTransaccion.GASTO }
 
-        val ingresosPorCategoria = ingresos.groupBy { it.categoriaId }
-            .mapValues { it.value.sumOf { t -> t.monto } }
+        val ingresosPorCategoria = ingresos
+            .groupBy { it.categoriaId }
+            .mapValues { (_, lista) -> lista.sumOf { it.monto } }
 
-        val gastosPorCategoria = gastos.groupBy { it.categoriaId }
-            .mapValues { it.value.sumOf { t -> t.monto } }
+        val gastosPorCategoria = gastos
+            .groupBy { it.categoriaId }
+            .mapValues { (_, lista) -> lista.sumOf { it.monto } }
 
-        val transaccionesPorDia = transacciones.groupBy {
-            Calendar.getInstance().apply { timeInMillis = it.fecha }.get(Calendar.DAY_OF_MONTH)
-        }.mapValues { it.value.sumOf { t -> if (t.tipo == "ingreso") t.monto else -t.monto } }
+        val transaccionesPorDia = transacciones
+            .groupBy {
+                Calendar.getInstance().apply {
+                    timeInMillis = it.fecha
+                }.get(Calendar.DAY_OF_MONTH)
+            }
+            .mapValues { (_, lista) ->
+                lista.sumOf {
+                    if (it.tipo == TipoTransaccion.INGRESO) it.monto else -it.monto
+                }
+            }
 
         return ReporteMensual(
             mes = mes,
