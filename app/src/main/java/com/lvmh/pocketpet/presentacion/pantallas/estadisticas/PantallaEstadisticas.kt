@@ -12,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.lvmh.pocketpet.presentacion.componentes.*
 import com.lvmh.pocketpet.presentacion.viewmodels.EstadisticasViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -22,6 +21,11 @@ fun PantallaEstadisticas(
     alNavegar: (String) -> Unit
 ) {
     val estado by viewModel.estado.collectAsState()
+
+    // Inicializar con un userId temporal
+    LaunchedEffect(Unit) {
+        viewModel.establecerUsuario("usuario_temp")
+    }
 
     Scaffold(
         topBar = {
@@ -59,7 +63,7 @@ fun PantallaEstadisticas(
             else -> {
                 ContenidoEstadisticas(
                     estado = estado,
-                    alCambiarPeriodo = { },
+                    alCambiarPeriodo = { viewModel.cambiarPeriodo(it) },
                     alNavegar = alNavegar,
                     modificador = Modifier.padding(padding)
                 )
@@ -169,11 +173,27 @@ private fun ContenidoEstadisticas(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             ) {
-                VistaGrafico(
-                    datos = estado.datosGrafico,
-                    tipo = TipoGrafico.BARRAS,
-                    modificador = Modifier.padding(16.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (estado.datosGrafico.isNotEmpty()) {
+                        Text(
+                            text = "Datos del gráfico: ${estado.datosGrafico.size} puntos",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        Text(
+                            text = "Sin datos para mostrar",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
 
@@ -232,6 +252,48 @@ private fun SelectorPeriodo(
                 selected = periodo == periodoSeleccionado,
                 onClick = { alSeleccionar(periodo) },
                 label = { Text(etiquetas[periodo] ?: periodo) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun TarjetaEstadistica(
+    titulo: String,
+    valor: String,
+    icono: @Composable () -> Unit,
+    colorFondo: Color,
+    colorTexto: Color,
+    modificador: Modifier = Modifier
+) {
+    Card(
+        modifier = modificador.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = colorFondo
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = titulo,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorTexto
+                )
+                icono()
+            }
+            Text(
+                text = valor,
+                style = MaterialTheme.typography.titleLarge,
+                color = colorTexto
             )
         }
     }
