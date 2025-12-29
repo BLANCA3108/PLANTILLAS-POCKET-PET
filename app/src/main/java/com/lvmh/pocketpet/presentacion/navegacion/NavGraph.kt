@@ -1,7 +1,7 @@
 package com.lvmh.pocketpet.presentacion.navegacion
 
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel // ✅ IMPORTANTE
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -21,7 +21,8 @@ fun PocketPetNavGraph() {
         startDestination = Routes.PRINCIPAL
     ) {
         composable(Routes.PRINCIPAL) {
-            val viewModel: TransaccionViewModel = viewModel()
+            // ✅ CORRECTO: hiltViewModel()
+            val viewModel: TransaccionViewModel = hiltViewModel()
             PantallaPrincipal(
                 viewModel = viewModel,
                 alNavegar = { ruta ->
@@ -31,7 +32,8 @@ fun PocketPetNavGraph() {
         }
 
         composable(Routes.ESTADISTICAS) {
-            val viewModel: EstadisticasViewModel = viewModel()
+            // ✅ CORRECTO: hiltViewModel()
+            val viewModel: EstadisticasViewModel = hiltViewModel()
             PantallaEstadisticas(
                 viewModel = viewModel,
                 alNavegar = { ruta ->
@@ -41,7 +43,8 @@ fun PocketPetNavGraph() {
         }
 
         composable(Routes.PRESUPUESTOS) {
-            val viewModel: PresupuestoViewModel = viewModel()
+            // ✅ CORRECTO: hiltViewModel()
+            val viewModel: PresupuestoViewModel = hiltViewModel()
             PantallaPresupuestos(
                 viewModel = viewModel,
                 alRegresar = {
