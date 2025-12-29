@@ -31,6 +31,14 @@ fun PantallaEstadisticas(
         topBar = {
             TopAppBar(
                 title = { Text("Estadísticas") },
+                navigationIcon = {
+                    IconButton(onClick = { alNavegar("principal") }) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Volver"
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
@@ -211,7 +219,7 @@ private fun ContenidoEstadisticas(
             ) {
 
                 OutlinedButton(
-                    onClick = { alNavegar("categorias_estadisticas") },
+                    onClick = { alNavegar("estadisticas_categorias") },
                     modifier = Modifier.weight(1f)
                 ) {
                     Icon(Icons.Default.Category, contentDescription = null)

@@ -1,5 +1,6 @@
 package com.lvmh.pocketpet.presentacion.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lvmh.pocketpet.datos.repositorios.PresupuestoRepository
@@ -10,6 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
+import java.util.Calendar
 import javax.inject.Inject
 
 data class EstadoPresupuesto(
@@ -21,8 +23,8 @@ data class EstadoPresupuesto(
     val error: String? = null
 )
 
-@HiltViewModel  // ⬅️ FALTABA ESTO
-class PresupuestoViewModel @Inject constructor(  // ⬅️ Y ESTO
+@HiltViewModel
+class PresupuestoViewModel @Inject constructor(
     private val presupuestoRepository: PresupuestoRepository,
     private val metaRepository: MetaRepository
 ) : ViewModel() {
@@ -32,6 +34,20 @@ class PresupuestoViewModel @Inject constructor(  // ⬅️ Y ESTO
 
     private val _usuarioId = MutableStateFlow("")
 
+    private var observandoPresupuestos = false
+
+    fun inicializarUsuario() {
+        val usuarioId = obtenerUsuarioActual()
+        if (usuarioId.isNotEmpty()) {
+            establecerUsuario(usuarioId)
+        }
+    }
+
+    private fun obtenerUsuarioActual(): String {
+        // TODO: Implementar tu lógica real de autenticación
+        return "usuario_demo_123"
+    }
+
     fun establecerUsuario(usuarioId: String) {
         _usuarioId.value = usuarioId
         cargarPresupuestos()
@@ -39,17 +55,36 @@ class PresupuestoViewModel @Inject constructor(  // ⬅️ Y ESTO
     }
 
     private fun cargarPresupuestos() {
+        if (observandoPresupuestos) return
+        observandoPresupuestos = true
+
+        Log.d("PresupuestoVM", "=== INICIANDO CARGA DE PRESUPUESTOS ===")
+        Log.d("PresupuestoVM", "Usuario ID: ${_usuarioId.value}")
+
         viewModelScope.launch {
             _estado.update { it.copy(cargando = true, error = null) }
             try {
+                // ✅ El Flow de Firebase emitirá automáticamente cuando haya cambios
                 presupuestoRepository.obtenerPorUsuario(_usuarioId.value)
                     .catch { e ->
+                        Log.e("PresupuestoVM", "❌ ERROR en Flow: ${e.message}", e)
                         _estado.update { it.copy(error = e.message, cargando = false) }
                     }
                     .collect { presupuestos ->
-                        _estado.update { it.copy(presupuestos = presupuestos, cargando = false) }
+                        Log.d("PresupuestoVM", "✅ Presupuestos recibidos: ${presupuestos.size}")
+                        presupuestos.forEach { p ->
+                            Log.d("PresupuestoVM", "  - ${p.categoriaId}: S/${p.monto}")
+                        }
+                        _estado.update {
+                            it.copy(
+                                presupuestos = presupuestos,
+                                cargando = false,
+                                error = null
+                            )
+                        }
                     }
             } catch (e: Exception) {
+                Log.e("PresupuestoVM", "❌ ERROR al cargar presupuestos: ${e.message}", e)
                 _estado.update {
                     it.copy(cargando = false, error = e.message ?: "Error al cargar presupuestos")
                 }
@@ -80,38 +115,87 @@ class PresupuestoViewModel @Inject constructor(  // ⬅️ Y ESTO
         alertaEn: Int
     ) {
         viewModelScope.launch {
+            Log.d("PresupuestoVM", "=== INICIANDO CREACIÓN DE PRESUPUESTO ===")
+            _estado.update { it.copy(cargando = true, error = null) }
+
             try {
+                // ✅ Obtener mes y año actuales
+                val calendar = Calendar.getInstance()
+                val mesActual = calendar.get(Calendar.MONTH) + 1 // Enero = 0, por eso +1
+                val anioActual = calendar.get(Calendar.YEAR)
+
+                // ✅ IMPORTANTE: Crear presupuesto con TODOS los campos
                 val presupuesto = Presupuesto(
                     id = UUID.randomUUID().toString(),
                     usuarioId = _usuarioId.value,
                     categoriaId = categoriaId,
                     monto = monto,
-                    periodo = periodo,
-                    alertaEn = alertaEn
+                    gastado = 0.0, // ✅ Siempre iniciar en 0
+                    periodo = periodo.lowercase(), // ✅ Firebase espera minúsculas
+                    mesInicio = mesActual,
+                    anioInicio = anioActual,
+                    activo = true,
+                    alertaEn = alertaEn,
+                    fechaCreacion = System.currentTimeMillis()
                 )
+
+                Log.d("PresupuestoVM", "Usuario ID: ${_usuarioId.value}")
+                Log.d("PresupuestoVM", "Presupuesto creado: $presupuesto")
+
+                // ✅ Guardar en Firebase (automáticamente actualiza el Flow)
                 presupuestoRepository.crear(presupuesto)
+
+                Log.d("PresupuestoVM", "✅ Presupuesto guardado en Firebase exitosamente")
+
+                // ✅ El Flow de Firebase detectará el cambio y actualizará la UI automáticamente
+                // No necesitamos actualizar manualmente porque el listener de Firebase lo hace
+
+                _estado.update { it.copy(cargando = false) }
+
             } catch (e: Exception) {
-                _estado.update { it.copy(error = e.message ?: "Error al crear presupuesto") }
+                Log.e("PresupuestoVM", "❌ ERROR al crear presupuesto: ${e.message}", e)
+                _estado.update {
+                    it.copy(
+                        error = "Error al crear presupuesto: ${e.message}",
+                        cargando = false
+                    )
+                }
             }
         }
     }
 
     fun actualizarPresupuesto(presupuesto: Presupuesto) {
         viewModelScope.launch {
+            _estado.update { it.copy(cargando = true) }
             try {
                 presupuestoRepository.actualizar(presupuesto)
+                // ✅ Firebase Flow lo detectará automáticamente
+                _estado.update { it.copy(cargando = false) }
             } catch (e: Exception) {
-                _estado.update { it.copy(error = e.message ?: "Error al actualizar presupuesto") }
+                _estado.update {
+                    it.copy(
+                        error = e.message ?: "Error al actualizar presupuesto",
+                        cargando = false
+                    )
+                }
             }
         }
     }
 
     fun eliminarPresupuesto(presupuesto: Presupuesto) {
         viewModelScope.launch {
+            _estado.update { it.copy(cargando = true) }
             try {
                 presupuestoRepository.eliminar(presupuesto)
+                // ✅ Firebase Flow lo detectará automáticamente
+                _estado.update { it.copy(cargando = false) }
             } catch (e: Exception) {
-                _estado.update { it.copy(error = e.message ?: "Error al eliminar presupuesto") }
+                _estado.update {
+                    it.copy(
+                        error = e.message ?: "Error al eliminar presupuesto",
+                        cargando = false
+                    )
+                }
             }
         }
     }
@@ -124,6 +208,7 @@ class PresupuestoViewModel @Inject constructor(  // ⬅️ Y ESTO
         categoriaId: String
     ) {
         viewModelScope.launch {
+            _estado.update { it.copy(cargando = true) }
             try {
                 val meta = Meta(
                     id = UUID.randomUUID().toString(),
@@ -131,12 +216,19 @@ class PresupuestoViewModel @Inject constructor(  // ⬅️ Y ESTO
                     nombre = nombre,
                     descripcion = descripcion,
                     montoObjetivo = montoObjetivo,
+                    montoActual = 0.0,
                     fechaLimite = fechaLimite,
                     categoriaId = categoriaId
                 )
                 metaRepository.crear(meta)
+                _estado.update { it.copy(cargando = false) }
             } catch (e: Exception) {
-                _estado.update { it.copy(error = e.message ?: "Error al crear meta") }
+                _estado.update {
+                    it.copy(
+                        error = e.message ?: "Error al crear meta",
+                        cargando = false
+                    )
+                }
             }
         }
     }
@@ -153,10 +245,17 @@ class PresupuestoViewModel @Inject constructor(  // ⬅️ Y ESTO
 
     fun eliminarMeta(meta: Meta) {
         viewModelScope.launch {
+            _estado.update { it.copy(cargando = true) }
             try {
                 metaRepository.eliminar(meta)
+                _estado.update { it.copy(cargando = false) }
             } catch (e: Exception) {
-                _estado.update { it.copy(error = e.message ?: "Error al eliminar meta") }
+                _estado.update {
+                    it.copy(
+                        error = e.message ?: "Error al eliminar meta",
+                        cargando = false
+                    )
+                }
             }
         }
     }
@@ -167,5 +266,10 @@ class PresupuestoViewModel @Inject constructor(  // ⬅️ Y ESTO
 
     fun seleccionarMeta(meta: Meta) {
         _estado.update { it.copy(metaSeleccionada = meta) }
+    }
+
+    // ✅ Función para limpiar errores
+    fun limpiarError() {
+        _estado.update { it.copy(error = null) }
     }
 }
