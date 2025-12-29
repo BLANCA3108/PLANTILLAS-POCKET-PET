@@ -108,6 +108,11 @@ private fun SeccionReporte(
     items: List<Pair<String, String>>
 ) {
     Card(
+<<<<<<< HEAD
+=======
+        onClick = alClick,
+        enabled = !meta.completada, // 👈 AQUÍ LA CLAVE
+>>>>>>> 48ca746fe8a4a3ac455baa997861fd65335cb759
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -126,6 +131,7 @@ private fun SeccionReporte(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+<<<<<<< HEAD
             items.forEachIndexed { index, (label, valor) ->
                 Row(
                     modifier = Modifier
@@ -149,4 +155,167 @@ private fun SeccionReporte(
             }
         }
     }
+=======
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "$${String.format("%.2f", meta.montoActual)}",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "Meta: $${String.format("%.2f", meta.montoObjetivo)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            BarraProgresoPersonalizada(
+                progreso = (meta.porcentajeCompletado / 100)
+                    .toFloat()
+                    .coerceIn(0f, 1f),
+                colorProgreso = if (meta.completada)
+                    Color(0xFF10B981)
+                else
+                    Color(0xFF6366F1),
+                mostrarPorcentaje = true
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = if (meta.completada)
+                        "Completada"
+                    else
+                        "${meta.diasRestantes} días restantes",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = formatoFecha.format(Date(meta.fechaLimite)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun DialogoNuevaMeta(
+    alConfirmar: (String, String, Double, Long, String) -> Unit,
+    alDismiss: () -> Unit
+) {
+    var nombre by remember { mutableStateOf("") }
+    var descripcion by remember { mutableStateOf("") }
+    var monto by remember { mutableStateOf("") }
+    var categoria by remember { mutableStateOf("") }
+
+    val calendar = Calendar.getInstance()
+    calendar.add(Calendar.MONTH, 1)
+
+    AlertDialog(
+        onDismissRequest = alDismiss,
+        title = { Text("Nueva Meta") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = nombre,
+                    onValueChange = { nombre = it },
+                    label = { Text("Nombre") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = descripcion,
+                    onValueChange = { descripcion = it },
+                    label = { Text("Descripción") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = monto,
+                    onValueChange = { monto = it },
+                    label = { Text("Monto Objetivo") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = categoria,
+                    onValueChange = { categoria = it },
+                    label = { Text("Categoría ID") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val montoDouble = monto.toDoubleOrNull() ?: 0.0
+                    alConfirmar(nombre, descripcion, montoDouble, calendar.timeInMillis, categoria)
+                },
+                enabled = nombre.isNotEmpty() && monto.isNotEmpty()
+            ) {
+                Text("Crear")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = alDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@Composable
+private fun DialogoAgregarMonto(
+    meta: Meta,
+    alConfirmar: (Double) -> Unit,
+    alDismiss: () -> Unit
+) {
+    var monto by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = alDismiss,
+        title = { Text("Agregar Aporte") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Meta: ${meta.nombre}")
+                Text("Progreso: $${String.format("%.2f", meta.montoActual)} / $${String.format("%.2f", meta.montoObjetivo)}")
+
+                OutlinedTextField(
+                    value = monto,
+                    onValueChange = { monto = it },
+                    label = { Text("Monto a aportar") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val montoDouble = monto.toDoubleOrNull() ?: 0.0
+                    if (montoDouble > 0) alConfirmar(montoDouble)
+                },
+                enabled = monto.toDoubleOrNull()?.let { it > 0 } ?: false
+            ) {
+                Text("Aportar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = alDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+>>>>>>> 48ca746fe8a4a3ac455baa997861fd65335cb759
 }

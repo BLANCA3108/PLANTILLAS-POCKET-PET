@@ -22,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mascotafinanciera.ui.theme.*
+import kotlinx.coroutines.delay
 import kotlin.random.Random
 
 data class Celda(
@@ -64,7 +65,7 @@ fun PantallaBuscaMinasJuego() {
 
     LaunchedEffect(estadoJuego.juegoIniciado, estadoJuego.juegoTerminado) {
         if (estadoJuego.juegoIniciado && !estadoJuego.juegoTerminado) {
-            kotlinx.coroutines.delay(1000)
+            delay(1000)
             estadoJuego = estadoJuego.copy(tiempo = estadoJuego.tiempo + 1)
         }
     }

@@ -1,6 +1,7 @@
 package com.lvmh.pocketpet.dominio.casouso.estadisticas
 
-import com.lvmh.pocketpet.datos.repositorios.TransactionRepository
+import com.lvmh.pocketpet.datos.repositorios.TransaccionRepository
+import com.lvmh.pocketpet.dominio.modelos.TipoTransaccion
 import kotlinx.coroutines.flow.first
 
 data class ComparacionPeriodo(
@@ -15,7 +16,7 @@ data class ComparacionPeriodo(
 )
 
 class CompararPeriodoUseCase(
-    private val transactionRepository: TransactionRepository
+    private val transaccionRepository: TransaccionRepository
 ) {
 
     suspend operator fun invoke(
@@ -26,20 +27,38 @@ class CompararPeriodoUseCase(
         finAnterior: Long
     ): ComparacionPeriodo {
 
-        val transaccionesActuales = transactionRepository.obtenerPorRangoFecha(usuarioId, inicioActual, finActual).first()
-        val transaccionesAnteriores = transactionRepository.obtenerPorRangoFecha(usuarioId, inicioAnterior, finAnterior).first()
+        val actuales = transaccionRepository
+            .obtenerTransaccionesPorRangoFecha(usuarioId, inicioActual, finActual)
+            .first()
 
-        val ingresosActuales = transaccionesActuales.filter { it.tipo == "ingreso" }.sumOf { it.monto }
-        val gastosActuales = transaccionesActuales.filter { it.tipo == "gasto" }.sumOf { it.monto }
+        val anteriores = transaccionRepository
+            .obtenerTransaccionesPorRangoFecha(usuarioId, inicioAnterior, finAnterior)
+            .first()
 
-        val ingresosAnteriores = transaccionesAnteriores.filter { it.tipo == "ingreso" }.sumOf { it.monto }
-        val gastosAnteriores = transaccionesAnteriores.filter { it.tipo == "gasto" }.sumOf { it.monto }
+        val ingresosActuales = actuales
+            .filter { it.tipo == TipoTransaccion.INGRESO }
+            .sumOf { it.monto }
+
+        val gastosActuales = actuales
+            .filter { it.tipo == TipoTransaccion.GASTO }
+            .sumOf { it.monto }
+
+        val ingresosAnteriores = anteriores
+            .filter { it.tipo == TipoTransaccion.INGRESO }
+            .sumOf { it.monto }
+
+        val gastosAnteriores = anteriores
+            .filter { it.tipo == TipoTransaccion.GASTO }
+            .sumOf { it.monto }
 
         val cambioIngresos = ingresosActuales - ingresosAnteriores
         val cambioGastos = gastosActuales - gastosAnteriores
 
-        val cambioIngresosPorc = if (ingresosAnteriores > 0) (cambioIngresos / ingresosAnteriores) * 100 else 0.0
-        val cambioGastosPorc = if (gastosAnteriores > 0) (cambioGastos / gastosAnteriores) * 100 else 0.0
+        val cambioIngresosPorc =
+            if (ingresosAnteriores > 0) (cambioIngresos / ingresosAnteriores) * 100 else 0.0
+
+        val cambioGastosPorc =
+            if (gastosAnteriores > 0) (cambioGastos / gastosAnteriores) * 100 else 0.0
 
         return ComparacionPeriodo(
             periodoActualIngresos = ingresosActuales,
