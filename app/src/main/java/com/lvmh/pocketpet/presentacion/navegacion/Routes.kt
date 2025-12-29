@@ -6,7 +6,7 @@ object Routes {
     const val SLIDE2 = "slide2"
     const val SLIDE3 = "slide3"
     // Autenticación
-    +
+
     const val PRINCIPAL = "principal"
     const val ESTADISTICAS = "estadisticas"
     const val PRESUPUESTOS = "presupuestos"
