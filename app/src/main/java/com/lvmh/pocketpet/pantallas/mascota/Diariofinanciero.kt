@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.mascotafinanciera.ui.theme.*
+import com.lvmh.pocketpet.presentacion.tema.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -55,9 +55,12 @@ data class ImpactoMascota(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaDiarioFinanciero() {
+fun PantallaDiarioFinanciero(
+    onVolver: () -> Unit = {}
+) {
     var filtroSeleccionado by remember { mutableStateOf<TipoTransaccion?>(null) }
     var mesSeleccionado by remember { mutableStateOf(Calendar.getInstance().get(Calendar.MONTH)) }
+    var mostrarDialogoFiltros by remember { mutableStateOf(false) }
 
     val entradas = remember { obtenerEntradasEjemplo() }
 
@@ -83,7 +86,7 @@ fun PantallaDiarioFinanciero() {
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = { /* Volver */ }) {
+                    IconButton(onClick = onVolver) {
                         Icon(
                             Icons.Default.ArrowBack,
                             contentDescription = "Volver",
@@ -96,7 +99,7 @@ fun PantallaDiarioFinanciero() {
                     titleContentColor = Color.White
                 ),
                 actions = {
-                    IconButton(onClick = { /* Filtros avanzados */ }) {
+                    IconButton(onClick = { mostrarDialogoFiltros = true }) {
                         Icon(
                             Icons.Default.FilterList,
                             contentDescription = "Filtros",
@@ -113,7 +116,6 @@ fun PantallaDiarioFinanciero() {
                 .padding(paddingValues)
                 .background(FondoApp)
         ) {
-            // Filtros rápidos
             FiltrosRapidos(
                 filtroSeleccionado = filtroSeleccionado,
                 onFiltroClick = {
@@ -121,28 +123,22 @@ fun PantallaDiarioFinanciero() {
                 }
             )
 
-            // Selector de mes
             SelectorMes(
                 mesActual = mesSeleccionado,
                 onMesSeleccionado = { mesSeleccionado = it }
             )
 
-            // Resumen del mes
             ResumenMensual(entradas = entradasFiltradas)
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Lista de entradas
             if (entradasFiltradas.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "🐾",
-                            fontSize = 60.sp
-                        )
+                        Text(text = "🐾", fontSize = 60.sp)
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             text = "Sin movimientos",
@@ -160,15 +156,25 @@ fun PantallaDiarioFinanciero() {
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(entradasFiltradas.sortedByDescending { it.fecha }) { entrada ->
                         TarjetaEntradaDiario(entrada = entrada)
-                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }
         }
+    }
+
+    if (mostrarDialogoFiltros) {
+        DialogoFiltrosAvanzados(
+            onDismiss = { mostrarDialogoFiltros = false }
+        )
     }
 }
 
@@ -188,35 +194,39 @@ fun FiltrosRapidos(
             icono = "💰",
             seleccionado = filtroSeleccionado == TipoTransaccion.INGRESO,
             color = VerdeMenta,
-            onClick = { onFiltroClick(TipoTransaccion.INGRESO) }
+            onClick = { onFiltroClick(TipoTransaccion.INGRESO) },
+            modifier = Modifier.weight(1f)
         )
         ChipFiltro(
             texto = "Gastos",
             icono = "💸",
             seleccionado = filtroSeleccionado == TipoTransaccion.GASTO,
             color = CoralPastel,
-            onClick = { onFiltroClick(TipoTransaccion.GASTO) }
+            onClick = { onFiltroClick(TipoTransaccion.GASTO) },
+            modifier = Modifier.weight(1f)
         )
         ChipFiltro(
             texto = "Ahorro",
             icono = "🐷",
             seleccionado = filtroSeleccionado == TipoTransaccion.AHORRO,
             color = AzulPastel,
-            onClick = { onFiltroClick(TipoTransaccion.AHORRO) }
+            onClick = { onFiltroClick(TipoTransaccion.AHORRO) },
+            modifier = Modifier.weight(1f)
         )
     }
 }
 
 @Composable
-fun RowScope.ChipFiltro(
+fun ChipFiltro(
     texto: String,
     icono: String,
     seleccionado: Boolean,
     color: Color,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = Modifier.weight(1f),
+        modifier = modifier,
         shape = RoundedCornerShape(16.dp),
         color = if (seleccionado) color else Color.White,
         shadowElevation = if (seleccionado) 4.dp else 2.dp,
@@ -259,9 +269,7 @@ fun SelectorMes(
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(
-            onClick = {
-                if (mesActual > 0) onMesSeleccionado(mesActual - 1)
-            },
+            onClick = { onMesSeleccionado(mesActual - 1) },
             enabled = mesActual > 0
         ) {
             Icon(
@@ -279,9 +287,7 @@ fun SelectorMes(
         )
 
         IconButton(
-            onClick = {
-                if (mesActual < 11) onMesSeleccionado(mesActual + 1)
-            },
+            onClick = { onMesSeleccionado(mesActual + 1) },
             enabled = mesActual < 11
         ) {
             Icon(
@@ -295,9 +301,11 @@ fun SelectorMes(
 
 @Composable
 fun ResumenMensual(entradas: List<EntradaDiario>) {
-    val totalIngresos = entradas.filter { it.tipo == TipoTransaccion.INGRESO }
+    val totalIngresos = entradas
+        .filter { it.tipo == TipoTransaccion.INGRESO }
         .sumOf { it.monto }
-    val totalGastos = entradas.filter { it.tipo == TipoTransaccion.GASTO }
+    val totalGastos = entradas
+        .filter { it.tipo == TipoTransaccion.GASTO }
         .sumOf { it.monto }
     val balance = totalIngresos - totalGastos
 
@@ -315,22 +323,51 @@ fun ResumenMensual(entradas: List<EntradaDiario>) {
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceAround
         ) {
-            ItemResumen("💰", String.format("S/ %.2f", totalIngresos), "Ingresos", VerdeMenta)
-            Divider(modifier = Modifier.height(50.dp).width(1.dp), color = GrisClaro)
-            ItemResumen("💸", String.format("S/ %.2f", totalGastos), "Gastos", CoralPastel)
-            Divider(modifier = Modifier.height(50.dp).width(1.dp), color = GrisClaro)
             ItemResumen(
-                if (balance >= 0) "📈" else "📉",
-                String.format("S/ %.2f", balance),
-                "Balance",
-                if (balance >= 0) VerdeMenta else CoralPastel
+                emoji = "💰",
+                valor = "S/ %.2f".format(totalIngresos),
+                etiqueta = "Ingresos",
+                color = VerdeMenta
+            )
+
+            Divider(
+                modifier = Modifier
+                    .height(50.dp)
+                    .width(1.dp),
+                color = GrisClaro
+            )
+
+            ItemResumen(
+                emoji = "💸",
+                valor = "S/ %.2f".format(totalGastos),
+                etiqueta = "Gastos",
+                color = CoralPastel
+            )
+
+            Divider(
+                modifier = Modifier
+                    .height(50.dp)
+                    .width(1.dp),
+                color = GrisClaro
+            )
+
+            ItemResumen(
+                emoji = if (balance >= 0) "📈" else "📉",
+                valor = "S/ %.2f".format(balance),
+                etiqueta = "Balance",
+                color = if (balance >= 0) VerdeMenta else CoralPastel
             )
         }
     }
 }
 
 @Composable
-fun ItemResumen(emoji: String, valor: String, etiqueta: String, color: Color) {
+fun ItemResumen(
+    emoji: String,
+    valor: String,
+    etiqueta: String,
+    color: Color
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = emoji, fontSize = 22.sp)
         Spacer(modifier = Modifier.height(4.dp))
@@ -402,7 +439,7 @@ fun TarjetaEntradaDiario(entrada: EntradaDiario) {
 
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "${if (entrada.tipo == TipoTransaccion.INGRESO) "+" else "-"} S/ ${String.format("%.2f", entrada.monto)}",
+                        text = "${if (entrada.tipo == TipoTransaccion.INGRESO) "+" else "-"} S/ ${"%.2f".format(entrada.monto)}",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (entrada.tipo == TipoTransaccion.INGRESO) VerdeMenta else CoralPastel
@@ -431,7 +468,7 @@ fun TarjetaEntradaDiario(entrada: EntradaDiario) {
                 exit = shrinkVertically() + fadeOut()
             ) {
                 Column(modifier = Modifier.padding(top = 12.dp)) {
-                    Divider(color = GrisClaro)
+                    HorizontalDivider(color = GrisClaro)
 
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -488,6 +525,32 @@ fun TarjetaEntradaDiario(entrada: EntradaDiario) {
             }
         }
     }
+}
+
+@Composable
+fun DialogoFiltrosAvanzados(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Text(text = "🔍", fontSize = 32.sp) },
+        title = {
+            Text(
+                text = "Filtros Avanzados",
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Text(
+                text = "Próximamente podrás filtrar por categorías, rangos de monto y más",
+                fontSize = 14.sp,
+                color = GrisMedio
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Entendido", color = MoradoPrincipal)
+            }
+        }
+    )
 }
 
 fun obtenerColorTipo(tipo: TipoTransaccion): Color {
@@ -572,7 +635,7 @@ fun obtenerEntradasEjemplo(): List<EntradaDiario> {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewDiarioFinanciero() {
-    MascotaFinancieraTheme {
+    PocketPetTema {
         PantallaDiarioFinanciero()
     }
 }

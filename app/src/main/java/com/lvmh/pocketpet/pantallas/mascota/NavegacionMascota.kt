@@ -26,14 +26,14 @@ sealed class RutasMascota(val ruta: String) {
 // ================== NAVEGACIÓN ==================
 @Composable
 fun NavegacionMascota(
-    navController: NavHostController = rememberNavController()
+    onVolverPrincipal: (() -> Unit)? = null  // ✅ Parámetro opcional
 ) {
+    val navController = rememberNavController()
+
     NavHost(
         navController = navController,
         startDestination = RutasMascota.Principal.ruta
     ) {
-
-        // ===== PANTALLA PRINCIPAL =====
         composable(RutasMascota.Principal.ruta) {
             PantallaPrincipalMascota(
                 onNavegar = { ruta ->
