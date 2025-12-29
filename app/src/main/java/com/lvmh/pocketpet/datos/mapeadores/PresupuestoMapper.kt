@@ -4,7 +4,7 @@ import com.lvmh.pocketpet.datos.firebase.modelos.PresupuestoFirebase
 import com.lvmh.pocketpet.datos.local.entidades.PresupuestoEntity
 import com.lvmh.pocketpet.dominio.modelos.Presupuesto
 
-fun Presupuesto.aFirebase() = PresupuestoFirebase(
+fun Presupuesto.aFirebase(): PresupuestoFirebase = PresupuestoFirebase(
     id = id,
     usuarioId = usuarioId,
     categoriaId = categoriaId,
@@ -18,7 +18,7 @@ fun Presupuesto.aFirebase() = PresupuestoFirebase(
     fechaCreacion = fechaCreacion
 )
 
-fun PresupuestoFirebase.aDominio() = Presupuesto(
+fun PresupuestoFirebase.aDominio(): Presupuesto = Presupuesto(
     id = id,
     usuarioId = usuarioId,
     categoriaId = categoriaId,
@@ -32,7 +32,7 @@ fun PresupuestoFirebase.aDominio() = Presupuesto(
     fechaCreacion = fechaCreacion
 )
 
-fun Presupuesto.aEntity() = PresupuestoEntity(
+fun Presupuesto.aEntity(): PresupuestoEntity = PresupuestoEntity(
     id = id,
     usuarioId = usuarioId,
     categoriaId = categoriaId,
@@ -46,7 +46,7 @@ fun Presupuesto.aEntity() = PresupuestoEntity(
     fechaCreacion = fechaCreacion
 )
 
-fun PresupuestoEntity.aDominio() = Presupuesto(
+fun PresupuestoEntity.aDominio(): Presupuesto = Presupuesto(
     id = id,
     usuarioId = usuarioId,
     categoriaId = categoriaId,

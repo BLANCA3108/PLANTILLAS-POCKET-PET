@@ -2,157 +2,120 @@ package com.lvmh.pocketpet.presentacion.pantallas.estadisticas
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.lvmh.pocketpet.dominio.modelos.Meta
-import com.lvmh.pocketpet.presentacion.componentes.BarraProgresoPersonalizada
-import com.lvmh.pocketpet.presentacion.viewmodels.PresupuestoViewModel
-import java.text.SimpleDateFormat
-import java.util.*
+import com.lvmh.pocketpet.presentacion.viewmodels.EstadisticasViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaMetas(
-    viewModel: PresupuestoViewModel,
+fun PantallaReportes(
+    viewModel: EstadisticasViewModel,
     alRegresar: () -> Unit
 ) {
     val estado by viewModel.estado.collectAsState()
-    var mostrarDialogo by remember { mutableStateOf(false) }
-    var metaSeleccionada by remember { mutableStateOf<Meta?>(null) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Metas Financieras") },
+                title = { Text("Reportes") },
                 navigationIcon = {
                     IconButton(onClick = alRegresar) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Regresar")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { /* Exportar PDF */ }) {
+                        Icon(Icons.Default.Download, contentDescription = "Exportar")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { mostrarDialogo = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Agregar meta")
-            }
         }
     ) { padding ->
-        if (estado.metas.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Default.Flag,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                Text(
+                    text = "Resumen Financiero",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+            }
+
+            estado.estadisticas?.let { stats ->
+                item {
+                    SeccionReporte(
+                        titulo = "Balance General",
+                        items = listOf(
+                            "Total Ingresos" to "$${String.format("%.2f", stats.totalIngresos)}",
+                            "Total Gastos" to "$${String.format("%.2f", stats.totalGastos)}",
+                            "Balance" to "$${String.format("%.2f", stats.balance)}",
+                            "Promedio Diario" to "$${String.format("%.2f", stats.promedioGastoDiario)}"
+                        )
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("No hay metas. Define una nueva.")
                 }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                val metasActivas = estado.metas.filter { !it.completada }
-                val metasCompletadas = estado.metas.filter { it.completada }
 
-                if (metasActivas.isNotEmpty()) {
-                    item {
-                        Text(
-                            text = "Activas",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                    }
-
-                    items(metasActivas) { meta ->
-                        TarjetaMeta(
-                            meta = meta,
-                            alClick = { metaSeleccionada = meta },
-                            alEliminar = { viewModel.eliminarMeta(meta) }
-                        )
-                    }
+            estado.reporteMensual?.let { reporte ->
+                item {
+                    SeccionReporte(
+                        titulo = "Gastos por Categoría",
+                        items = reporte.gastosPorCategoria.map { (categoria, monto) ->
+                            categoria to "$${String.format("%.2f", monto)}"
+                        }
+                    )
                 }
 
-                if (metasCompletadas.isNotEmpty()) {
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Completadas",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                    }
-
-                    items(metasCompletadas) { meta ->
-                        TarjetaMeta(
-                            meta = meta,
-                            alClick = { metaSeleccionada = meta },
-                            alEliminar = { viewModel.eliminarMeta(meta) }
-                        )
-                    }
+                item {
+                    SeccionReporte(
+                        titulo = "Ingresos por Categoría",
+                        items = reporte.ingresosPorCategoria.map { (categoria, monto) ->
+                            categoria to "$${String.format("%.2f", monto)}"
+                        }
+                    )
                 }
             }
-        }
 
-        if (mostrarDialogo) {
-            DialogoNuevaMeta(
-                alConfirmar = { nombre, descripcion, monto, fechaLimite, categoria ->
-                    viewModel.crearMeta(nombre, descripcion, monto, fechaLimite, categoria)
-                    mostrarDialogo = false
-                },
-                alDismiss = { mostrarDialogo = false }
-            )
-        }
-
-        metaSeleccionada?.let { meta ->
-            DialogoAgregarMonto(
-                meta = meta,
-                alConfirmar = { monto ->
-                    viewModel.agregarMontoMeta(meta.id, monto)
-                    metaSeleccionada = null
-                },
-                alDismiss = { metaSeleccionada = null }
-            )
+            item {
+                Button(
+                    onClick = { /* Generar PDF */ },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Download, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Descargar Reporte PDF")
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun TarjetaMeta(
-    meta: Meta,
-    alClick: () -> Unit,
-    alEliminar: () -> Unit
+private fun SeccionReporte(
+    titulo: String,
+    items: List<Pair<String, String>>
 ) {
-    val formatoFecha = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-
     Card(
+<<<<<<< HEAD
+=======
         onClick = alClick,
         enabled = !meta.completada, // 👈 AQUÍ LA CLAVE
+>>>>>>> 48ca746fe8a4a3ac455baa997861fd65335cb759
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (meta.completada)
-                Color(0xFFD1FAE5)
-            else
-                MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Column(
@@ -160,43 +123,39 @@ private fun TarjetaMeta(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (meta.completada) {
-                            Icon(
-                                Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                tint = Color(0xFF10B981),
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                        }
-                        Text(
-                            text = meta.nombre,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-                    if (meta.descripcion.isNotEmpty()) {
-                        Text(
-                            text = meta.descripcion,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                IconButton(onClick = alEliminar) {
-                    Icon(Icons.Default.Delete, contentDescription = "Eliminar")
-                }
-            }
+            Text(
+                text = titulo,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
+<<<<<<< HEAD
+            items.forEachIndexed { index, (label, valor) ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = valor,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                if (index < items.size - 1) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                }
+            }
+        }
+    }
+=======
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -358,4 +317,5 @@ private fun DialogoAgregarMonto(
             }
         }
     )
+>>>>>>> 48ca746fe8a4a3ac455baa997861fd65335cb759
 }

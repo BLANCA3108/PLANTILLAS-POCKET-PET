@@ -5,6 +5,8 @@
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
+<<<<<<< HEAD
+=======
       <SelectionState runConfigName="PreviewBuscaMinasJuego">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
@@ -20,6 +22,7 @@
       <SelectionState runConfigName="PreviewPersonalizar">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
+>>>>>>> 48ca746fe8a4a3ac455baa997861fd65335cb759
     </selectionStates>
   </component>
 </project>
