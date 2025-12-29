@@ -1,10 +1,10 @@
-package com.lvmh.pocketpetdemo.datos.mapeadores
+package com.lvmh.pocketpet.datos.mapeadores
 
 import com.lvmh.pocketpet.datos.firebase.modelos.MetaFirebase
 import com.lvmh.pocketpet.datos.local.entidades.MetaEntity
 import com.lvmh.pocketpet.dominio.modelos.Meta
 
-fun Meta.aFirebase() = MetaFirebase(
+fun Meta.aFirebase(): MetaFirebase = MetaFirebase(
     id = id,
     usuarioId = usuarioId,
     nombre = nombre,
@@ -19,7 +19,7 @@ fun Meta.aFirebase() = MetaFirebase(
     fechaCompletada = fechaCompletada
 )
 
-fun MetaFirebase.aDominio() = Meta(
+fun MetaFirebase.aDominio(): Meta = Meta(
     id = id,
     usuarioId = usuarioId,
     nombre = nombre,
@@ -34,7 +34,7 @@ fun MetaFirebase.aDominio() = Meta(
     fechaCompletada = fechaCompletada
 )
 
-fun Meta.aEntity() = MetaEntity(
+fun Meta.aEntity(): MetaEntity = MetaEntity(
     id = id,
     usuarioId = usuarioId,
     nombre = nombre,
@@ -49,7 +49,7 @@ fun Meta.aEntity() = MetaEntity(
     fechaCompletada = fechaCompletada
 )
 
-fun MetaEntity.aDominio() = Meta(
+fun MetaEntity.aDominio(): Meta = Meta(
     id = id,
     usuarioId = usuarioId,
     nombre = nombre,
