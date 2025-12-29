@@ -13,6 +13,10 @@ import com.lvmh.pocketpet.presentacion.viewmodels.EstadisticasViewModel
 import com.lvmh.pocketpet.presentacion.viewmodels.PresupuestoViewModel
 // ✅ Imports para Mascota
 import com.lvmh.pocketpet.pantallas.mascota.NavegacionMascota
+import com.lvmh.pocketpet.pantallas.Logo
+import com.lvmh.pocketpet.pantallas.Slide1
+import com.lvmh.pocketpet.pantallas.Slide2
+import com.lvmh.pocketpet.pantallas.Slide3
 
 @Composable
 fun PocketPetNavGraph() {
@@ -20,8 +24,53 @@ fun PocketPetNavGraph() {
 
     NavHost(
         navController = navController,
-        startDestination = Routes.PRINCIPAL
+        startDestination = Routes.LOGO   // 👈 CAMBIO CLAVE
     ) {
+
+        // ===============================
+        // 🔹 ONBOARDING
+        // ===============================
+
+        composable(Routes.LOGO) {
+            Logo(
+                onNext = {
+                    navController.navigate(Routes.SLIDE1) {
+                        popUpTo(Routes.LOGO) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Routes.SLIDE1) {
+            Slide1(
+                onNext = {
+                    navController.navigate(Routes.SLIDE2)
+                }
+            )
+        }
+
+        composable(Routes.SLIDE2) {
+            Slide2(
+                onNext = {
+                    navController.navigate(Routes.SLIDE3)
+                }
+            )
+        }
+
+        composable(Routes.SLIDE3) {
+            Slide3(
+                onNext = {
+                    navController.navigate(Routes.PRINCIPAL) {
+                        popUpTo(Routes.LOGO) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // ===============================
+        // 🔹 APP PRINCIPAL (TU CÓDIGO ORIGINAL)
+        // ===============================
+
         composable(Routes.PRINCIPAL) {
             val viewModel: TransaccionViewModel = hiltViewModel()
             PantallaPrincipal(
@@ -52,7 +101,7 @@ fun PocketPetNavGraph() {
             )
         }
 
-        // ✅ NUEVA RUTA: Sección Mascota con su propia navegación interna
+        // 🔹 Mascota (NavGraph interno)
         composable(Routes.MASCOTA) {
             NavegacionMascota()
         }

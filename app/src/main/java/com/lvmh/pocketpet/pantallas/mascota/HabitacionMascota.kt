@@ -25,7 +25,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.mascotafinanciera.ui.theme.*
+import com.lvmh.pocketpet.presentacion.tema.*
+import androidx.compose.ui.graphics.graphicsLayer
 
 data class Habitacion(
     val nivel: Int = 1,
@@ -83,7 +84,9 @@ data class Decoracion(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaHabitacionMascota() {
+fun PantallaHabitacionMascota(
+    onVolver: () -> Unit = {}
+) {
     var habitacion by remember {
         mutableStateOf(
             Habitacion(
@@ -125,7 +128,7 @@ fun PantallaHabitacionMascota() {
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = { /* Volver */ }) {
+                    IconButton(onClick = onVolver) {
                         Icon(
                             Icons.Default.ArrowBack,
                             contentDescription = "Volver",
@@ -363,7 +366,9 @@ fun VistaHabitacion(
                     Text(
                         text = habitacion.ambiente,
                         fontSize = 40.sp,
-                        modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(16.dp)
                     )
                 }
 
@@ -387,8 +392,14 @@ fun VistaHabitacion(
                                 .align(alignment)
                                 .padding(
                                     when (mueble.posicion) {
-                                        PosicionMueble.IZQUIERDA -> PaddingValues(start = 20.dp, bottom = 30.dp)
-                                        PosicionMueble.DERECHA -> PaddingValues(end = 20.dp, bottom = 30.dp)
+                                        PosicionMueble.IZQUIERDA -> PaddingValues(
+                                            start = 20.dp,
+                                            bottom = 30.dp
+                                        )
+                                        PosicionMueble.DERECHA -> PaddingValues(
+                                            end = 20.dp,
+                                            bottom = 30.dp
+                                        )
                                         PosicionMueble.CENTRO -> PaddingValues(bottom = 30.dp)
                                         PosicionMueble.ARRIBA -> PaddingValues(top = 20.dp)
                                     }
@@ -667,7 +678,9 @@ fun TarjetaMueble(
                 Text(
                     text = mueble.emoji,
                     fontSize = 48.sp,
-                    modifier = Modifier.alpha(if (desbloqueado || !bloqueadoPorNivel) 1f else 0.4f)
+                    modifier = Modifier.graphicsLayer(
+                        alpha = if (desbloqueado || !bloqueadoPorNivel) 1f else 0.4f
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -742,7 +755,9 @@ fun TarjetaMueble(
                             text = "Bloqueado",
                             fontSize = 12.sp,
                             color = GrisMedio,
-                            modifier = Modifier.padding(vertical = 8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
                             textAlign = TextAlign.Center
                         )
                     }
@@ -820,63 +835,20 @@ fun obtenerMueblesPorCategoria(categoria: TipoMueble): List<Mueble> {
         TipoMueble.CAMA -> listOf(
             Mueble("cama1", "🛏️", "Cama Simple", TipoMueble.CAMA, 0, 1, false, false, PosicionMueble.IZQUIERDA),
             Mueble("cama2", "🛌", "Cama Doble", TipoMueble.CAMA, 200, 3, false, false, PosicionMueble.IZQUIERDA),
-            Mueble("cama3", "🏨", "Cama King", TipoMueble.CAMA, 500, 5, false, false, PosicionMueble.IZQUIERDA),
-            Mueble("cama4", "💎", "Cama de Lujo", TipoMueble.CAMA, 1000, 8, false, false, PosicionMueble.IZQUIERDA)
-        )
-        TipoMueble.MESA -> listOf(
-            Mueble("mesa1", "🪑", "Mesa Básica", TipoMueble.MESA, 100, 1, false, false, PosicionMueble.CENTRO),
-            Mueble("mesa2", "🍽️", "Mesa Comedor", TipoMueble.MESA, 250, 3, false, false, PosicionMueble.CENTRO),
-            Mueble("mesa3", "🎮", "Mesa Gaming", TipoMueble.MESA, 400, 5, false, false, PosicionMueble.CENTRO),
-            Mueble("mesa4", "💼", "Escritorio Pro", TipoMueble.MESA, 800, 7, false, false, PosicionMueble.CENTRO)
-        )
-        TipoMueble.SILLA -> listOf(
-            Mueble("silla1", "🪑", "Silla Simple", TipoMueble.SILLA, 50, 1, false, false, PosicionMueble.CENTRO),
-            Mueble("silla2", "💺", "Silla Cómoda", TipoMueble.SILLA, 150, 2, false, false, PosicionMueble.CENTRO),
-            Mueble("silla3", "🎯", "Silla Gamer", TipoMueble.SILLA, 350, 4, false, false, PosicionMueble.CENTRO),
-            Mueble("silla4", "👔", "Silla Ejecutiva", TipoMueble.SILLA, 600, 6, false, false, PosicionMueble.CENTRO)
+            Mueble("cama3", "🏨", "Cama King", TipoMueble.CAMA, 500, 5, false, false, PosicionMueble.IZQUIERDA)
         )
         TipoMueble.PLANTA -> listOf(
             Mueble("planta1", "🪴", "Planta Pequeña", TipoMueble.PLANTA, 50, 1, false, false, PosicionMueble.DERECHA),
             Mueble("planta2", "🌿", "Helecho", TipoMueble.PLANTA, 100, 2, false, false, PosicionMueble.DERECHA),
-            Mueble("planta3", "🌵", "Cactus", TipoMueble.PLANTA, 150, 3, false, false, PosicionMueble.DERECHA),
-            Mueble("planta4", "🌴", "Palmera", TipoMueble.PLANTA, 300, 4, false, false, PosicionMueble.DERECHA),
-            Mueble("planta5", "🌺", "Flor Tropical", TipoMueble.PLANTA, 400, 5, false, false, PosicionMueble.DERECHA),
-            Mueble("planta6", "🌸", "Cerezo", TipoMueble.PLANTA, 800, 7, false, false, PosicionMueble.DERECHA)
+            Mueble("planta3", "🌵", "Cactus", TipoMueble.PLANTA, 150, 3, false, false, PosicionMueble.DERECHA)
         )
-        TipoMueble.LAMPARA -> listOf(
-            Mueble("lampara1", "💡", "Bombilla", TipoMueble.LAMPARA, 80, 1, false, false, PosicionMueble.ARRIBA),
-            Mueble("lampara2", "🕯️", "Vela", TipoMueble.LAMPARA, 120, 2, false, false, PosicionMueble.ARRIBA),
-            Mueble("lampara3", "🔦", "Lámpara LED", TipoMueble.LAMPARA, 200, 3, false, false, PosicionMueble.ARRIBA),
-            Mueble("lampara4", "💫", "Lámpara Estrella", TipoMueble.LAMPARA, 350, 5, false, false, PosicionMueble.ARRIBA),
-            Mueble("lampara5", "🌟", "Araña de Luces", TipoMueble.LAMPARA, 700, 7, false, false, PosicionMueble.ARRIBA)
-        )
-        TipoMueble.ESTANTE -> listOf(
-            Mueble("estante1", "📚", "Estante Básico", TipoMueble.ESTANTE, 150, 2, false, false, PosicionMueble.DERECHA),
-            Mueble("estante2", "📖", "Librería", TipoMueble.ESTANTE, 300, 3, false, false, PosicionMueble.DERECHA),
-            Mueble("estante3", "🎨", "Estante Moderno", TipoMueble.ESTANTE, 450, 5, false, false, PosicionMueble.DERECHA),
-            Mueble("estante4", "🏆", "Vitrina Trofeos", TipoMueble.ESTANTE, 800, 7, false, false, PosicionMueble.DERECHA)
-        )
-        TipoMueble.ALFOMBRA -> listOf(
-            Mueble("alfombra1", "🟥", "Alfombra Roja", TipoMueble.ALFOMBRA, 100, 1, false, false, PosicionMueble.CENTRO),
-            Mueble("alfombra2", "🟦", "Alfombra Azul", TipoMueble.ALFOMBRA, 100, 1, false, false, PosicionMueble.CENTRO),
-            Mueble("alfombra3", "🟩", "Alfombra Verde", TipoMueble.ALFOMBRA, 100, 1, false, false, PosicionMueble.CENTRO),
-            Mueble("alfombra4", "🟨", "Alfombra Dorada", TipoMueble.ALFOMBRA, 250, 3, false, false, PosicionMueble.CENTRO),
-            Mueble("alfombra5", "🎨", "Alfombra Persa", TipoMueble.ALFOMBRA, 500, 5, false, false, PosicionMueble.CENTRO),
-            Mueble("alfombra6", "✨", "Alfombra Mágica", TipoMueble.ALFOMBRA, 1000, 8, false, false, PosicionMueble.CENTRO)
-        )
-        TipoMueble.VENTANA -> listOf(
-            Mueble("ventana1", "🪟", "Ventana Simple", TipoMueble.VENTANA, 150, 2, false, false, PosicionMueble.ARRIBA),
-            Mueble("ventana2", "🌅", "Ventana Grande", TipoMueble.VENTANA, 300, 4, false, false, PosicionMueble.ARRIBA),
-            Mueble("ventana3", "🌃", "Ventana Ciudad", TipoMueble.VENTANA, 500, 6, false, false, PosicionMueble.ARRIBA),
-            Mueble("ventana4", "🌌", "Ventana Espacial", TipoMueble.VENTANA, 900, 8, false, false, PosicionMueble.ARRIBA)
-        )
+        else -> emptyList()
     }
 }
-
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewHabitacion() {
-    MascotaFinancieraTheme {
+    PocketPetTema {
         PantallaHabitacionMascota()
     }
 }
