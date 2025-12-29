@@ -7,8 +7,11 @@ import com.lvmh.pocketpet.dominio.modelos.Presupuesto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class PresupuestoRepository(
+@Singleton  // ⬅️ AGREGAR
+class PresupuestoRepository @Inject constructor(  // ⬅️ AGREGAR @Inject constructor
     private val firebaseDataSource: PresupuestoFirebaseDataSource,
     private val localDao: PresupuestoDao
 ) {

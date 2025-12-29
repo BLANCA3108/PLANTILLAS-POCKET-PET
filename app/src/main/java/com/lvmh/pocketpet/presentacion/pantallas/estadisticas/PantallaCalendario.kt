@@ -34,7 +34,6 @@ fun PantallaCalendario(
 
     LaunchedEffect(mesActual) {
         viewModel.cargarReporteMensual(
-            usuarioId = usuarioId,
             mes = mesActual.get(Calendar.MONTH) + 1,
             anio = mesActual.get(Calendar.YEAR)
         )

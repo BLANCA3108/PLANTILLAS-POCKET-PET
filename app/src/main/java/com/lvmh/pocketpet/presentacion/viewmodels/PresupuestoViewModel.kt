@@ -6,9 +6,11 @@ import com.lvmh.pocketpet.datos.repositorios.PresupuestoRepository
 import com.lvmh.pocketpet.datos.repositorios.MetaRepository
 import com.lvmh.pocketpet.dominio.modelos.Presupuesto
 import com.lvmh.pocketpet.dominio.modelos.Meta
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
+import javax.inject.Inject
 
 data class EstadoPresupuesto(
     val cargando: Boolean = false,
@@ -19,7 +21,8 @@ data class EstadoPresupuesto(
     val error: String? = null
 )
 
-class PresupuestoViewModel(
+@HiltViewModel  // ⬅️ FALTABA ESTO
+class PresupuestoViewModel @Inject constructor(  // ⬅️ Y ESTO
     private val presupuestoRepository: PresupuestoRepository,
     private val metaRepository: MetaRepository
 ) : ViewModel() {

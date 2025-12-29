@@ -6,8 +6,13 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class PresupuestoFirebaseDataSource(private val firestore: FirebaseFirestore) {
+@Singleton
+class PresupuestoFirebaseDataSource @Inject constructor(  // ⬅️ CAMBIAR ESTO
+    private val firestore: FirebaseFirestore
+) {
 
     private val coleccion = firestore.collection("presupuestos")
 
