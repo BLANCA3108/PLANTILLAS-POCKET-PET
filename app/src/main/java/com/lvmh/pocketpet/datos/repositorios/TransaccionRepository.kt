@@ -166,4 +166,18 @@ class TransaccionRepository @Inject constructor(
         val gastos = obtenerTotalPorTipo(usuarioId, TipoTransaccion.GASTO)
         return ingresos - gastos
     }
+
+    suspend fun obtenerTotalPorTipoYFecha(
+        usuarioId: String,
+        tipo: TipoTransaccion,
+        fechaInicio: Long,
+        fechaFin: Long
+    ): Double {
+        return transaccionDao.obtenerTotalPorTipoYFecha(
+            usuarioId = usuarioId,
+            tipo = tipo.name,
+            fechaInicio = fechaInicio,
+            fechaFin = fechaFin
+        ) ?: 0.0
+    }
 }
