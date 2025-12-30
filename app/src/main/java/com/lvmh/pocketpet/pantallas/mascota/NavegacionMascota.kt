@@ -1,128 +1,125 @@
 package com.lvmh.pocketpet.pantallas.mascota
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue  // AGREGAR ESTE IMPORT
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-// ✅ IMPORTS DE LOS JUEGOS (paquete diferente)
-import com.example.mascotafinanciera.pantallas.juegos.PantallaAtrapaMonedasJuego
-import com.example.mascotafinanciera.pantallas.juegos.PantallaBuscaMinasJuego
-import com.example.mascotafinanciera.pantallas.juegos.PantallaMenuJuegos
+import com.google.firebase.firestore.FirebaseFirestore
+import com.lvmh.pocketpet.datos.firebase.fuentesdatos.MascotaFirebaseDataSource
+import com.lvmh.pocketpet.datos.local.AppDatabase
+import com.lvmh.pocketpet.datos.repositorios.MascotaRepository
+import com.example.mascotafinanciera.pantallas.juegos.*
 
-// ================== NAVEGACIÓN ==================
 @Composable
-fun NavegacionMascota(onVolverPrincipal: (() -> Unit)? = null) {
+fun NavegacionMascota(
+    usuarioId: String,
+    database: AppDatabase,
+    firestore: FirebaseFirestore,
+    onVolverPrincipal: (() -> Unit)? = null
+) {
     val navController = rememberNavController()
 
     NavHost(
         navController = navController,
         startDestination = RutasMascota.Principal.ruta
     ) {
-        // ===== PANTALLA PRINCIPAL =====
+
         composable(RutasMascota.Principal.ruta) {
+
+            val repository = MascotaRepository(
+                firebaseDataSource = MascotaFirebaseDataSource(firestore),
+                mascotaDao = database.mascotaDao()
+            )
+
+            val viewModel: MascotaViewModel = viewModel(
+                factory = MascotaViewModelFactory(
+                    repository = repository,
+                    usuarioId = usuarioId
+                )
+            )
+
+            // Observar cuando se debe navegar después de crear mascota
+            val debeMostrarPantallaPrincipal by viewModel.debeMostrarPantallaPrincipal.collectAsState()
+
+            LaunchedEffect(debeMostrarPantallaPrincipal) {
+                if (debeMostrarPantallaPrincipal) {
+                    // Resetear el estado de navegación
+                    viewModel.resetearNavegacion()
+                    // Ya estamos en la pantalla principal, no necesitamos navegar
+                }
+            }
+
             PantallaPrincipalMascota(
+                viewModel = viewModel,
                 onNavegar = { ruta ->
                     when (ruta) {
-                        "inicio" -> {
-                            // 👈 Volver a la pantalla principal de la app
-                            onVolverPrincipal?.invoke()
-                        }
-                        else -> {
-                            navController.navigate(ruta)
-                        }
+                        "inicio" -> onVolverPrincipal?.invoke()
+                        else -> navController.navigate(ruta)
                     }
                 }
             )
         }
 
-        // ===== CUIDAR MASCOTA =====
         composable(RutasMascota.Cuidar.ruta) {
-            PantallaCuidarMascota(
-                onVolver = { navController.popBackStack() }
-            )
+            PantallaCuidarMascota { navController.popBackStack() }
         }
 
-        // ===== LOGROS =====
         composable(RutasMascota.Logros.ruta) {
-            PantallaLogros(
-                onVolver = { navController.popBackStack() }
-            )
+            PantallaLogros { navController.popBackStack() }
         }
 
-        // ===== DESAFÍOS =====
         composable(RutasMascota.Desafios.ruta) {
-            PantallaDesafios(
-                onVolver = { navController.popBackStack() }
-            )
+            PantallaDesafios { navController.popBackStack() }
         }
 
-        // ===== EVOLUCIÓN =====
         composable(RutasMascota.Evolucion.ruta) {
-            PantallaEvolucion(
-                onVolver = { navController.popBackStack() }
-            )
+            PantallaEvolucion { navController.popBackStack() }
         }
 
-        // ===== MENSAJES =====
         composable(RutasMascota.Mensajes.ruta) {
-            PantallaMensajes(
-                onVolver = { navController.popBackStack() }
-            )
+            PantallaMensajes { navController.popBackStack() }
         }
 
-        // ===== DIARIO =====
         composable(RutasMascota.Diario.ruta) {
-            PantallaDiarioFinanciero(
-                onVolver = { navController.popBackStack() }
-            )
+            PantallaDiarioFinanciero { navController.popBackStack() }
         }
 
-        // ===== PERSONALIZAR/TIENDA =====
         composable(RutasMascota.Personalizar.ruta) {
-            PantallaPersonalizarMascota(
-                onVolver = { navController.popBackStack() }
-            )
+            PantallaPersonalizarMascota { navController.popBackStack() }
         }
 
-        // ===== HABITACIÓN =====
         composable(RutasMascota.Habitacion.ruta) {
-            PantallaHabitacionMascota(
-                onVolver = { navController.popBackStack() }
-            )
+            PantallaHabitacionMascota { navController.popBackStack() }
         }
 
-        // ===== ESTADÍSTICAS DETALLADAS =====
         composable(RutasMascota.Estadisticas.ruta) {
-            PantallaEstadisticasMascota(
-                onVolver = { navController.popBackStack() }
-            )
+            PantallaEstadisticasMascota { navController.popBackStack() }
         }
 
-        // ===== MENÚ DE JUEGOS =====
         composable(RutasMascota.MenuJuegos.ruta) {
             PantallaMenuJuegos(
                 onVolver = { navController.popBackStack() },
                 onJuegoSeleccionado = { juego ->
                     when (juego) {
-                        "buscaminas" -> navController.navigate(RutasMascota.BuscaMinas.ruta)
-                        "atrapamonedas" -> navController.navigate(RutasMascota.AtrapaMonedas.ruta)
+                        "buscaminas" ->
+                            navController.navigate(RutasMascota.BuscaMinas.ruta)
+                        "atrapamonedas" ->
+                            navController.navigate(RutasMascota.AtrapaMonedas.ruta)
                     }
                 }
             )
         }
 
-        // ===== JUEGO: BUSCA MINAS =====
         composable(RutasMascota.BuscaMinas.ruta) {
-            PantallaBuscaMinasJuego(
-                onVolver = { navController.popBackStack() }
-            )
+            PantallaBuscaMinasJuego { navController.popBackStack() }
         }
 
-        // ===== JUEGO: ATRAPA MONEDAS =====
         composable(RutasMascota.AtrapaMonedas.ruta) {
-            PantallaAtrapaMonedasJuego(
-                onVolver = { navController.popBackStack() }
-            )
+            PantallaAtrapaMonedasJuego { navController.popBackStack() }
         }
     }
 }

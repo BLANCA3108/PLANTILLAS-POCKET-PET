@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mascotafinanciera.ui.theme.*
@@ -28,25 +28,79 @@ import kotlinx.coroutines.delay
 
 /*----MASCOTAAAAAA---*/
 data class EstadoMascota(
+    val id: String = "",
     val nombre: String = "POCKET PET",
-    val salud: Int = 75, // 0-100
+    val tipo: String = "🐶",
+    val salud: Int = 75,
     val nivel: Int = 5,
     val experiencia: Int = 650,
     val experienciaMax: Int = 1000,
     val hambre: Int = 60,
     val felicidad: Int = 80,
-    val energia: Int = 70
+    val energia: Int = 70,
+    val monedasDisponibles: Int = 0
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaPrincipalMascota(
-    estado: EstadoMascota = EstadoMascota(),
-            onNavegar: (String) -> Unit = {}
+    viewModel: MascotaViewModel,
+    onNavegar: (String) -> Unit = {}
 ) {
+    val estadoNullable by viewModel.estadoMascota.collectAsState()
+    val primerIngreso by viewModel.primerIngreso.collectAsState()
+    val debeMostrarPantallaPrincipal by viewModel.debeMostrarPantallaPrincipal.collectAsState()
+    val monedasDisponibles by viewModel.monedasDisponibles.collectAsState()
+    val cargando by viewModel.cargando.collectAsState()
+    val mensajeErrorState by viewModel.mensajeError.collectAsState()
+
+    // Controlar la navegación automática
+    LaunchedEffect(debeMostrarPantallaPrincipal) {
+        if (debeMostrarPantallaPrincipal) {
+            // No necesitamos navegar, solo mostrar la pantalla principal
+            // El ViewModel ya actualizó el estado
+        }
+    }
+
+    // Mostrar pantalla de selección si es primer ingreso
+    if (primerIngreso || estadoNullable == null) {
+        val mascotasDisponibles = listOf(
+            MascotaData("Perrito", "🐶", "Amigable y leal"),
+            MascotaData("Gatito", "🐱", "Independiente y curioso"),
+            MascotaData("Conejito", "🐰", "Tierno y rápido"),
+            MascotaData("Tortuga", "🐢", "Sabio y paciente"),
+            MascotaData("Unicornio", "🦄", "Mágico y especial")
+        )
+
+        PantallaSeleccionMascota(
+            mascotas = mascotasDisponibles,
+            onMascotaSeleccionada = { mascota, nombre ->
+                viewModel.seleccionarMascota(mascota.emoji, nombre)
+            },
+            onMascotaSorpresa = { nombre ->
+                viewModel.mascotaSorpresa(nombre)
+            }
+        )
+
+        // Mostrar loading si está cargando
+        if (cargando) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = MoradoPrincipal)
+            }
+        }
+        return
+    }
+
+    // Crear variable local no-null para evitar problemas de smart cast
+    val estado = estadoNullable ?: return
+
     var pantalla_seleccionada by remember { mutableStateOf(1) }
     var menuDeslizableAbierto by remember { mutableStateOf(false) }
-    var monedasDisponibles by remember { mutableStateOf(1250) }
 
     val infiniteTransition = rememberInfiniteTransition(label = "respiracion")
     val escala by infiniteTransition.animateFloat(
@@ -60,6 +114,74 @@ fun PantallaPrincipalMascota(
     )
 
     var mensajeAccion by remember { mutableStateOf("") }
+
+    // Mostrar mensaje de error si existe
+    if (mensajeErrorState.isNotEmpty()) {
+        LaunchedEffect(mensajeErrorState) {
+            delay(3000)
+            // Opción 1: Si tienes la función limpiarMensajeError()
+            // viewModel.limpiarMensajeError()
+
+            // Opción 2: Si mensajeError es MutableStateFlow público
+            // viewModel.mensajeError.value = ""
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.5f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .padding(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        Icons.Default.Error,
+                        contentDescription = "Error",
+                        tint = CoralPastel,
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Error",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = CoralPastel
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = mensajeErrorState,
+                        fontSize = 14.sp,
+                        color = GrisTexto,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            // Opción 1: Si tienes la función limpiarMensajeError()
+                            // viewModel.limpiarMensajeError()
+
+                            // Opción 2: Si mensajeError es MutableStateFlow público
+                            // viewModel.mensajeError.value = ""
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = CoralPastel
+                        )
+                    ) {
+                        Text("Aceptar")
+                    }
+                }
+            }
+        }
+        return
+    }
 
     Scaffold(
         topBar = {
@@ -79,7 +201,6 @@ fun PantallaPrincipalMascota(
                     titleContentColor = Color.White
                 ),
                 actions = {
-                    // Monedas disponibles
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             Icons.Default.AttachMoney,
@@ -117,7 +238,7 @@ fun PantallaPrincipalMascota(
             BarraNavegacionInferior(
                 pantalla_seleccionada = pantalla_seleccionada,
                 onPantallaSeleccionada = { pantalla_seleccionada = it },
-                onNavegar = onNavegar // 👈 PASAR el callback
+                onNavegar = onNavegar
             )
         }
     ) { paddingValues ->
@@ -127,14 +248,14 @@ fun PantallaPrincipalMascota(
                 onAccionSeleccionada = { accion ->
                     menuDeslizableAbierto = false
                     when (accion) {
-                        "alimentar" -> onNavegar(RutasMascota.Cuidar.ruta)  // 👈 CAMBIAR
-                        "jugar" -> onNavegar(RutasMascota.MenuJuegos.ruta)  // 👈 CAMBIAR
-                        "cuidar" -> onNavegar(RutasMascota.Cuidar.ruta)  // 👈 CAMBIAR
-                        "tienda" -> onNavegar(RutasMascota.Personalizar.ruta)  // 👈 CAMBIAR
-                        "estadisticas" -> onNavegar(RutasMascota.Estadisticas.ruta)  // 👈 CAMBIAR
+                        "alimentar" -> onNavegar(RutasMascota.Cuidar.ruta)
+                        "jugar" -> onNavegar(RutasMascota.MenuJuegos.ruta)
+                        "cuidar" -> onNavegar(RutasMascota.Cuidar.ruta)
+                        "tienda" -> onNavegar(RutasMascota.Personalizar.ruta)
+                        "estadisticas" -> onNavegar(RutasMascota.Estadisticas.ruta)
                         "regalos" -> mensajeAccion = "¡Reclama tu regalo diario! 🎁"
                         "configuracion" -> mensajeAccion = "Configuración ⚙️"
-                        "ayuda" -> onNavegar(RutasMascota.Mensajes.ruta)  // 👈 CAMBIAR
+                        "ayuda" -> onNavegar(RutasMascota.Mensajes.ruta)
                         else -> mensajeAccion = "Acción realizada"
                     }
                 }
@@ -161,7 +282,7 @@ fun PantallaPrincipalMascota(
                     .padding(horizontal = 20.dp, vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
+                // MOSTRAR NOMBRE DE LA MASCOTA CREADA
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -200,8 +321,13 @@ fun PantallaPrincipalMascota(
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
-                BarraExperiencia(estado.experiencia, estado.experienciaMax)
+                BarraExperiencia(
+                    estado.experiencia,
+                    estado.experienciaMax
+                )
                 Spacer(modifier = Modifier.height(32.dp))
+
+                // MOSTRAR EL EMOJI REAL DE LA MASCOTA (no basado en salud)
                 Box(
                     modifier = Modifier
                         .size(220.dp)
@@ -229,7 +355,7 @@ fun PantallaPrincipalMascota(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = obtenerEmojiMascota(estado.salud),
+                            text = estado.tipo, // Usar el emoji real de la mascota
                             fontSize = 100.sp
                         )
                     }
@@ -261,9 +387,6 @@ fun PantallaPrincipalMascota(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // En tu PantallaPrincipalMascota.kt, actualiza estas secciones:
-
-// 1️⃣ ACTUALIZAR los botones de acción rápida (línea ~355 aproximadamente)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -296,7 +419,6 @@ fun PantallaPrincipalMascota(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-// 2️⃣ Segunda fila de botones
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -355,6 +477,16 @@ fun PantallaPrincipalMascota(
         }
     }
 }
+
+// FIN DE LA PARTE 1
+// Confirma para continuar con la Parte 2
+
+// FIN DE LA PARTE 1
+// Confirma para continuar con la Parte 2
+
+// FIN DE LA PARTE 1
+// Confirma para continuar con la Parte 2
+// PARTE 2 - Continúa después de la función PantallaPrincipalMascota
 
 @Composable
 fun MenuDeslizable(
@@ -593,7 +725,7 @@ fun BotonAccion(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = texto,
+            texto,
             fontSize = 12.sp,
             color = GrisTexto,
             fontWeight = FontWeight.Medium
@@ -601,12 +733,11 @@ fun BotonAccion(
     }
 }
 
-
 @Composable
 fun BarraNavegacionInferior(
     pantalla_seleccionada: Int,
     onPantallaSeleccionada: (Int) -> Unit,
-    onNavegar: (String) -> Unit = {} // 👈 NUEVO parámetro
+    onNavegar: (String) -> Unit = {}
 ) {
     NavigationBar(
         containerColor = Color.White,
@@ -624,7 +755,7 @@ fun BarraNavegacionInferior(
             selected = pantalla_seleccionada == 0,
             onClick = {
                 onPantallaSeleccionada(0)
-                onNavegar("inicio") // 👈 NAVEGAR a inicio
+                onNavegar("inicio")
             },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = GrisTexto,
@@ -646,7 +777,6 @@ fun BarraNavegacionInferior(
             selected = pantalla_seleccionada == 1,
             onClick = {
                 onPantallaSeleccionada(1)
-                // Ya estamos en mascota, no navegar
             },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = RosaPastel,
@@ -668,7 +798,7 @@ fun BarraNavegacionInferior(
             selected = pantalla_seleccionada == 2,
             onClick = {
                 onPantallaSeleccionada(2)
-                onNavegar(RutasMascota.Estadisticas.ruta) // 👈 O la ruta que uses para análisis
+                onNavegar(RutasMascota.Estadisticas.ruta)
             },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = GrisTexto,
@@ -690,8 +820,7 @@ fun BarraNavegacionInferior(
             selected = pantalla_seleccionada == 3,
             onClick = {
                 onPantallaSeleccionada(3)
-                // Mostrar menú o navegar a configuración
-                onNavegar("configuracion") // 👈 O donde quieras
+                onNavegar("configuracion")
             },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = GrisTexto,
@@ -713,17 +842,17 @@ fun BarraExperiencia(actual: Int, maximo: Int) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "✨", fontSize = 18.sp)
+                Text("✨", fontSize = 18.sp)
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Experiencia",
+                    "Experiencia",
                     fontSize = 15.sp,
                     color = GrisMedio,
                     fontWeight = FontWeight.Medium
                 )
             }
             Text(
-                text = "$actual / $maximo XP",
+                "$actual / $maximo XP",
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 color = MoradoPrincipal
@@ -746,10 +875,7 @@ fun BarraExperiencia(actual: Int, maximo: Int) {
                     .clip(RoundedCornerShape(7.dp))
                     .background(
                         Brush.horizontalGradient(
-                            colors = listOf(
-                                MoradoPrincipal,
-                                MoradoClaro
-                            )
+                            colors = listOf(MoradoPrincipal, MoradoClaro)
                         )
                     )
             )
@@ -761,9 +887,7 @@ fun BarraExperiencia(actual: Int, maximo: Int) {
 fun TarjetaSalud(salud: Int) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(6.dp),
         shape = RoundedCornerShape(24.dp)
     ) {
@@ -772,10 +896,10 @@ fun TarjetaSalud(salud: Int) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "💚", fontSize = 22.sp)
+                Text("💚", fontSize = 22.sp)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Estado de Salud",
+                    "Estado de Salud",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = GrisTexto
@@ -786,7 +910,7 @@ fun TarjetaSalud(salud: Int) {
 
             Box(contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(
-                    progress = 1f,
+                    progress = { 1f },
                     modifier = Modifier.size(130.dp),
                     strokeWidth = 12.dp,
                     color = GrisClaro,
@@ -794,7 +918,7 @@ fun TarjetaSalud(salud: Int) {
                 )
 
                 CircularProgressIndicator(
-                    progress = salud / 100f,
+                    progress = { salud / 100f },
                     modifier = Modifier.size(130.dp),
                     strokeWidth = 12.dp,
                     color = obtenerColorSalud(salud),
@@ -803,13 +927,13 @@ fun TarjetaSalud(salud: Int) {
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "$salud",
+                        "$salud",
                         fontSize = 40.sp,
                         fontWeight = FontWeight.Bold,
                         color = obtenerColorSalud(salud)
                     )
                     Text(
-                        text = obtenerTextoEstado(salud),
+                        obtenerTextoEstado(salud),
                         fontSize = 16.sp,
                         color = GrisMedio,
                         fontWeight = FontWeight.Medium
@@ -824,9 +948,7 @@ fun TarjetaSalud(salud: Int) {
 fun TarjetaEstadisticas() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(4.dp),
         shape = RoundedCornerShape(20.dp)
     ) {
@@ -837,23 +959,19 @@ fun TarjetaEstadisticas() {
             horizontalArrangement = Arrangement.SpaceAround
         ) {
             ItemEstadistica("💰", "S/ 1,250", "Ahorrado")
-
-            Divider(
+            HorizontalDivider(
                 modifier = Modifier
                     .height(60.dp)
                     .width(1.dp),
                 color = GrisClaro
             )
-
             ItemEstadistica("📊", "23 días", "Racha")
-
-            Divider(
+            HorizontalDivider(
                 modifier = Modifier
                     .height(60.dp)
                     .width(1.dp),
                 color = GrisClaro
             )
-
             ItemEstadistica("🎯", "3/5", "Metas")
         }
     }
@@ -865,16 +983,16 @@ fun ItemEstadistica(emoji: String, valor: String, etiqueta: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.padding(vertical = 4.dp)
     ) {
-        Text(text = emoji, fontSize = 26.sp)
+        Text(emoji, fontSize = 26.sp)
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = valor,
+            valor,
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             color = GrisTexto
         )
         Text(
-            text = etiqueta,
+            etiqueta,
             fontSize = 12.sp,
             color = GrisMedio
         )
@@ -901,21 +1019,4 @@ fun obtenerTextoEstado(salud: Int): String {
     }
 }
 
-fun obtenerEmojiMascota(salud: Int): String {
-    return when (salud) {
-        in 0..20 -> "🐢"
-        in 21..40 -> "🐰"
-        in 41..60 -> "🐱"
-        in 61..80 -> "🐶"
-        else -> "🦄"
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-
-@Composable
-fun PreviewPantallaMascota() {
-    MascotaFinancieraTheme {
-        PantallaPrincipalMascota()
-    }
-}
+// FIN DEL ARCHIVO PantallaPrincipalMascota.kt
