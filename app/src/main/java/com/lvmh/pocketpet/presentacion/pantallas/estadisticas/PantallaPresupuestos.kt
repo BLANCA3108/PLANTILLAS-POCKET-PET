@@ -24,7 +24,7 @@ import com.lvmh.pocketpet.presentacion.viewmodels.PresupuestoViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Presupuestos(
+fun PantallaPresupuestos(
     onBackClick: () -> Unit = {},
     viewModel: PresupuestoViewModel = hiltViewModel()
 ) {

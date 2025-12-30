@@ -23,31 +23,35 @@ fun BarraProgresoPersonalizada(
     mostrarPorcentaje: Boolean = true,
     modificador: Modifier = Modifier
 ) {
+    // Asegurar que el progreso esté entre 0 y 1
     val progresoLimitado = progreso.coerceIn(0f, 1f)
 
-    var progresoAnimado by remember { mutableStateOf(0f) }
-
-    LaunchedEffect(progresoLimitado) {
-        animate(
-            initialValue = progresoAnimado,
-            targetValue = progresoLimitado,
-            animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing)
-        ) { value, _ ->
-            progresoAnimado = value
-        }
-    }
+    // Animación del progreso
+    val progresoAnimado by animateFloatAsState(
+        targetValue = progresoLimitado,
+        animationSpec = tween(
+            durationMillis = 800,
+            easing = FastOutSlowInEasing
+        ),
+        label = "progreso_animation"
+    )
 
     Column(modifier = modificador.fillMaxWidth()) {
-        if (etiqueta.isNotEmpty()) {
+        // Etiqueta y porcentaje (si aplica)
+        if (etiqueta.isNotEmpty() || mostrarPorcentaje) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = etiqueta,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                if (etiqueta.isNotEmpty()) {
+                    Text(
+                        text = etiqueta,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
                 if (mostrarPorcentaje) {
                     Text(
                         text = "${(progresoLimitado * 100).toInt()}%",
@@ -60,6 +64,7 @@ fun BarraProgresoPersonalizada(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
+        // Barra de progreso
         Box(
             modifier = Modifier
                 .fillMaxWidth()

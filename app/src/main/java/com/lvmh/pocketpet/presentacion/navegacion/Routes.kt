@@ -10,4 +10,5 @@ object Routes {
     const val ESTADISTICAS = "estadisticas"
     const val PRESUPUESTOS = "presupuestos"
     const val MASCOTA = "mascota"
+    const val CALENDARIO = "calendario"  // ← AGREGAR ESTA LÍNEA
 }

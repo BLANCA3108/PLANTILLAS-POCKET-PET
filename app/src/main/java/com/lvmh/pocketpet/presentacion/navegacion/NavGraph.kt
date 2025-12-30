@@ -9,7 +9,13 @@ import com.lvmh.pocketpet.presentacion.pantallas.PantallaPrincipal
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaEstadisticas
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaEstadisticasCategorias
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaTendencias
-import com.lvmh.pocketpet.pantallas.Presupuestos
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaComparativos
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaReportes
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaMetas
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaCalendario
+import com.lvmh.pocketpet.pantallas.PantallaPresupuestos
+import com.lvmh.pocketpet.pantallas.Configuracion
+import com.lvmh.pocketpet.pantallas.Categorias
 import com.lvmh.pocketpet.viewmodels.TransaccionViewModel
 import com.lvmh.pocketpet.presentacion.viewmodels.EstadisticasViewModel
 import com.lvmh.pocketpet.presentacion.viewmodels.PresupuestoViewModel
@@ -22,6 +28,9 @@ import com.lvmh.pocketpet.pantallas.Slide3
 @Composable
 fun PocketPetNavGraph() {
     val navController = rememberNavController()
+
+    // ID de usuario temporal - reemplaza con tu sistema de autenticación real
+    val usuarioId = "usuario_demo_001"
 
     NavHost(
         navController = navController,
@@ -82,6 +91,20 @@ fun PocketPetNavGraph() {
             )
         }
 
+        // ===============================
+        // 🔹 SECCIÓN ANÁLISIS
+        // ===============================
+
+        composable("comparativos") {
+            val viewModel: EstadisticasViewModel = hiltViewModel()
+            PantallaComparativos(
+                viewModel = viewModel,
+                alRegresar = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         composable(Routes.ESTADISTICAS) {
             val viewModel: EstadisticasViewModel = hiltViewModel()
             PantallaEstadisticas(
@@ -102,6 +125,37 @@ fun PocketPetNavGraph() {
             )
         }
 
+        composable(Routes.CALENDARIO) {
+            val viewModel: EstadisticasViewModel = hiltViewModel()
+            PantallaCalendario(
+                viewModel = viewModel,
+                usuarioId = usuarioId,
+                alRegresar = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Routes.PRESUPUESTOS) {
+            val viewModel: PresupuestoViewModel = hiltViewModel()
+            PantallaPresupuestos(
+                onBackClick = {
+                    navController.popBackStack()
+                },
+                viewModel = viewModel
+            )
+        }
+
+        composable("reportes") {
+            val viewModel: EstadisticasViewModel = hiltViewModel()
+            PantallaReportes(
+                viewModel = viewModel,
+                alRegresar = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         composable("tendencias") {
             val viewModel: EstadisticasViewModel = hiltViewModel()
             PantallaTendencias(
@@ -112,15 +166,38 @@ fun PocketPetNavGraph() {
             )
         }
 
-        composable(Routes.PRESUPUESTOS) {
-            val viewModel: PresupuestoViewModel = hiltViewModel()
-            Presupuestos(
-                onBackClick = {
+        composable("metas") {
+            PantallaMetas(
+                usuarioId = usuarioId,
+                alRegresar = {
                     navController.popBackStack()
-                },
-                viewModel = viewModel
+                }
             )
         }
+
+        // ===============================
+        // 🔹 SECCIÓN MÁS
+        // ===============================
+
+        composable("configuracion") {
+            Configuracion(
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable("categorias") {
+            Categorias(
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // ===============================
+        // 🔹 MASCOTA
+        // ===============================
 
         composable(Routes.MASCOTA) {
             NavegacionMascota()

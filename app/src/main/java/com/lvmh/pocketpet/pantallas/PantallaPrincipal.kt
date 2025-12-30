@@ -33,6 +33,8 @@ fun PantallaPrincipal(
     val totalGastos by viewModel.totalGastos.collectAsState()
 
     var mostrarDialogoNuevaTransaccion by remember { mutableStateOf(false) }
+    var mostrarMenuMas by remember { mutableStateOf(false) }
+    var mostrarMenuAnalisis by remember { mutableStateOf(false) }
 
     // Inicializar con un userId temporal
     LaunchedEffect(Unit) {
@@ -56,12 +58,18 @@ fun PantallaPrincipal(
                     }
                 },
                 actions = {
-                    // Botón para ir a la mascota (método 1)
                     IconButton(onClick = { alNavegar(Routes.MASCOTA) }) {
                         Icon(
-                            Icons.Default.Pets,
-                            contentDescription = "Mi Mascota",
-                            tint = MaterialTheme.colorScheme.secondary
+                            Icons.Default.AccountCircle,
+                            contentDescription = "Perfil",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    IconButton(onClick = { alNavegar(Routes.CALENDARIO) }) {
+                        Icon(
+                            Icons.Default.CalendarMonth,
+                            contentDescription = "Calendario",
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
@@ -71,7 +79,6 @@ fun PantallaPrincipal(
             )
         },
         bottomBar = {
-            // Barra de navegación inferior (método 2 - recomendado)
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant
             ) {
@@ -89,15 +96,15 @@ fun PantallaPrincipal(
                 )
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.BarChart, contentDescription = null) },
-                    label = { Text("Estadísticas") },
+                    label = { Text("Análisis") },
                     selected = false,
-                    onClick = { alNavegar(Routes.ESTADISTICAS) }
+                    onClick = { mostrarMenuAnalisis = true }
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.AccountBalanceWallet, contentDescription = null) },
-                    label = { Text("Presupuestos") },
+                    icon = { Icon(Icons.Default.MoreHoriz, contentDescription = null) },
+                    label = { Text("Más") },
                     selected = false,
-                    onClick = { alNavegar(Routes.PRESUPUESTOS) }
+                    onClick = { mostrarMenuMas = true }
                 )
             }
         },
@@ -174,7 +181,7 @@ fun PantallaPrincipal(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Transacciones Recientes",
+                                text = "Historial de transacciones",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -209,6 +216,7 @@ fun PantallaPrincipal(
             }
         }
 
+        // Diálogo de nueva transacción
         if (mostrarDialogoNuevaTransaccion) {
             DialogoNuevaTransaccion(
                 alConfirmar = { tipo, monto, categoriaId, categoriaNombre, categoriaEmoji, descripcion ->
@@ -225,7 +233,307 @@ fun PantallaPrincipal(
                 alDismiss = { mostrarDialogoNuevaTransaccion = false }
             )
         }
+
+        // Menú "Análisis"
+        if (mostrarMenuAnalisis) {
+            MenuAnalisis(
+                alDismiss = { mostrarMenuAnalisis = false },
+                alNavegar = alNavegar
+            )
+        }
+
+        // Menú "Más"
+        if (mostrarMenuMas) {
+            MenuMas(
+                alDismiss = { mostrarMenuMas = false },
+                alNavegar = alNavegar
+            )
+        }
     }
+}
+
+@Composable
+private fun MenuAnalisis(
+    alDismiss: () -> Unit,
+    alNavegar: (String) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = alDismiss,
+        icon = { Icon(Icons.Default.BarChart, contentDescription = null) },
+        title = { Text("Análisis") },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Comparativos
+                Card(
+                    onClick = {
+                        alNavegar("comparativos")
+                        alDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Compare,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Comparativos",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
+
+                // Estadísticas
+                Card(
+                    onClick = {
+                        alNavegar(Routes.ESTADISTICAS)
+                        alDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Analytics,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Estadísticas",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
+
+                // Presupuestos
+                Card(
+                    onClick = {
+                        alNavegar(Routes.PRESUPUESTOS)
+                        alDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.AccountBalance,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Presupuestos",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
+
+                // Reportes
+                Card(
+                    onClick = {
+                        alNavegar("reportes")
+                        alDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Description,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Reportes",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
+
+                // Tendencias
+                Card(
+                    onClick = {
+                        alNavegar("tendencias")
+                        alDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.TrendingUp,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Tendencias",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
+
+                // Metas
+                Card(
+                    onClick = {
+                        alNavegar("metas")
+                        alDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Flag,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Metas",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = alDismiss) {
+                Text("Cerrar")
+            }
+        }
+    )
+}
+
+@Composable
+private fun MenuMas(
+    alDismiss: () -> Unit,
+    alNavegar: (String) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = alDismiss,
+        icon = { Icon(Icons.Default.MoreHoriz, contentDescription = null) },
+        title = { Text("Más opciones") },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Configuración
+                Card(
+                    onClick = {
+                        alNavegar("configuracion")
+                        alDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Configuración",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
+
+                // Categorías
+                Card(
+                    onClick = {
+                        alNavegar("categorias")
+                        alDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Category,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Categorías",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = alDismiss) {
+                Text("Cerrar")
+            }
+        }
+    )
 }
 
 @Composable
@@ -250,7 +558,7 @@ private fun TarjetaBalance(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Balance Total",
+                text = "Saldo disponible",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -258,7 +566,7 @@ private fun TarjetaBalance(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "$${String.format("%.2f", balance)}",
+                text = "S/. ${String.format("%.3f", balance)}",
                 style = MaterialTheme.typography.displaySmall,
                 color = if (balance >= 0)
                     Color(0xFF10B981)
@@ -266,9 +574,15 @@ private fun TarjetaBalance(
                     Color(0xFFEF4444)
             )
 
+            Text(
+                text = "Actualización ahora",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
 
-            Divider(
+            HorizontalDivider(
                 modifier = Modifier.fillMaxWidth(0.9f),
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f)
             )
@@ -539,7 +853,7 @@ private fun DialogoNuevaTransaccion(
                     },
                     label = { Text("Monto") },
                     modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = { Text("$") },
+                    leadingIcon = { Text("S/.") },
                     isError = errorMonto,
                     supportingText = if (errorMonto) {
                         { Text("Ingresa un monto válido") }
