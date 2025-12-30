@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.lvmh.pocketpet.datos.repositorios.TransaccionRepository
 import com.lvmh.pocketpet.dominio.casouso.estadisticas.*
 import com.lvmh.pocketpet.dominio.modelos.Transaccion
+import com.lvmh.pocketpet.dominio.modelos.TipoTransaccion
 import com.lvmh.pocketpet.dominio.utilidades.AsistenteGraficos
 import com.lvmh.pocketpet.dominio.utilidades.PuntoGrafico
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -50,7 +51,6 @@ class EstadisticasViewModel @Inject constructor(
                 val (inicio, fin) = obtenerRangoFechas(_estado.value.periodoSeleccionado)
                 val stats = calcularEstadisticasUseCase(_usuarioId.value, inicio, fin)
 
-                // ✅ Obtener transacciones con tipo explícito
                 val transacciones: List<Transaccion> = transaccionRepository
                     .obtenerTransaccionesPorRangoFecha(_usuarioId.value, inicio, fin)
                     .first()
@@ -72,6 +72,47 @@ class EstadisticasViewModel @Inject constructor(
             } catch (e: Exception) {
                 _estado.update {
                     it.copy(cargando = false, error = e.message ?: "Error desconocido")
+                }
+            }
+        }
+    }
+
+    // ✅ NUEVO: Método para cargar estadísticas por categoría
+    fun cargarEstadisticasPorCategoria() {
+        viewModelScope.launch {
+            _estado.update { it.copy(cargando = true, error = null) }
+            try {
+                val (inicio, fin) = obtenerRangoFechas(_estado.value.periodoSeleccionado)
+
+                val transacciones: List<Transaccion> = transaccionRepository
+                    .obtenerTransaccionesPorRangoFecha(_usuarioId.value, inicio, fin)
+                    .first()
+
+                // Agrupar transacciones por categoría (solo gastos)
+                val porCategoria = transacciones
+                    .filter { it.tipo == TipoTransaccion.GASTO }
+                    .groupBy { it.categoriaNombre }
+                    .map { (categoria, transaccionesCategoria) ->
+                        PuntoGrafico(
+                            etiqueta = categoria,
+                            valor = transaccionesCategoria.sumOf { it.monto }
+                        )
+                    }
+                    .sortedByDescending { it.valor }
+
+                _estado.update {
+                    it.copy(
+                        cargando = false,
+                        datosGrafico = porCategoria,
+                        error = null
+                    )
+                }
+            } catch (e: Exception) {
+                _estado.update {
+                    it.copy(
+                        cargando = false,
+                        error = "Error al cargar estadísticas por categoría: ${e.message}"
+                    )
                 }
             }
         }

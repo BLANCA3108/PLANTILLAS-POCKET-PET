@@ -10,9 +10,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.lvmh.pocketpet.dominio.modelos.Categoria
 import com.lvmh.pocketpet.dominio.modelos.Transaccion
 import com.lvmh.pocketpet.dominio.modelos.TipoTransaccion
+import com.lvmh.pocketpet.dominio.modelos.TipoCategoria
+import com.lvmh.pocketpet.dominio.modelos.toTipoTransaccion
 import com.lvmh.pocketpet.viewmodels.TransaccionViewModel
 import com.lvmh.pocketpet.presentacion.navegacion.Routes
 import java.text.SimpleDateFormat
@@ -36,9 +40,9 @@ fun PantallaPrincipal(
     var mostrarMenuMas by remember { mutableStateOf(false) }
     var mostrarMenuAnalisis by remember { mutableStateOf(false) }
 
-    // Inicializar con un userId temporal
+    // Inicializar con el usuario real - CORREGIDO
     LaunchedEffect(Unit) {
-        viewModel.inicializar("usuario_temp")
+        viewModel.inicializar()  // ← SIN parámetro
     }
 
     Scaffold(
@@ -58,6 +62,7 @@ fun PantallaPrincipal(
                     }
                 },
                 actions = {
+                    // QUITAMOS el botón "+" de aquí
                     IconButton(onClick = { alNavegar(Routes.MI_PERFIL) }) {
                         Icon(
                             Icons.Default.AccountCircle,
@@ -213,6 +218,7 @@ fun PantallaPrincipal(
             }
         }
 
+        // Diálogo de nueva transacción
         if (mostrarDialogoNuevaTransaccion) {
             DialogoNuevaTransaccion(
                 alConfirmar = { tipo, monto, categoriaId, categoriaNombre, categoriaEmoji, descripcion ->
@@ -226,7 +232,82 @@ fun PantallaPrincipal(
                     )
                     mostrarDialogoNuevaTransaccion = false
                 },
-                alDismiss = { mostrarDialogoNuevaTransaccion = false }
+                alDismiss = { mostrarDialogoNuevaTransaccion = false },
+                alNavegar = alNavegar,
+                categorias = listOf(
+                    Categoria(
+                        id = "cat_1",
+                        nombre = "General",
+                        emoji = "💰",
+                        tipo = TipoCategoria.GASTO
+                    ),
+                    Categoria(
+                        id = "cat_2",
+                        nombre = "Comida",
+                        emoji = "🍔",
+                        tipo = TipoCategoria.GASTO
+                    ),
+                    Categoria(
+                        id = "cat_3",
+                        nombre = "Transporte",
+                        emoji = "🚗",
+                        tipo = TipoCategoria.GASTO
+                    ),
+                    Categoria(
+                        id = "cat_4",
+                        nombre = "Entretenimiento",
+                        emoji = "🎮",
+                        tipo = TipoCategoria.GASTO
+                    ),
+                    Categoria(
+                        id = "cat_5",
+                        nombre = "Compras",
+                        emoji = "🛒",
+                        tipo = TipoCategoria.GASTO
+                    ),
+                    Categoria(
+                        id = "cat_6",
+                        nombre = "Servicios",
+                        emoji = "💡",
+                        tipo = TipoCategoria.GASTO
+                    ),
+                    Categoria(
+                        id = "cat_7",
+                        nombre = "Salud",
+                        emoji = "🏥",
+                        tipo = TipoCategoria.GASTO
+                    ),
+                    Categoria(
+                        id = "cat_8",
+                        nombre = "Educación",
+                        emoji = "📚",
+                        tipo = TipoCategoria.GASTO
+                    ),
+                    Categoria(
+                        id = "cat_9",
+                        nombre = "Salario",
+                        emoji = "💵",
+                        tipo = TipoCategoria.INGRESO
+                    ),
+                    Categoria(
+                        id = "cat_10",
+                        nombre = "Freelance",
+                        emoji = "💼",
+                        tipo = TipoCategoria.INGRESO
+                    ),
+                    Categoria(
+                        id = "cat_11",
+                        nombre = "Inversiones",
+                        emoji = "📈",
+                        tipo = TipoCategoria.INGRESO
+                    ),
+                    Categoria(
+                        id = "cat_12",
+                        nombre = "Otros Ingresos",
+                        emoji = "💸",
+                        tipo = TipoCategoria.INGRESO
+                    )
+                )
             )
         }
 
@@ -502,15 +583,28 @@ private fun TarjetaTransaccion(transaccion: Transaccion, alEliminar: () -> Unit)
 @Composable
 private fun DialogoNuevaTransaccion(
     alConfirmar: (TipoTransaccion, Double, String, String, String, String) -> Unit,
-    alDismiss: () -> Unit
+    alDismiss: () -> Unit,
+    alNavegar: (String) -> Unit,
+    categorias: List<Categoria> = listOf()
 ) {
     var tipo by remember { mutableStateOf(TipoTransaccion.GASTO) }
     var monto by remember { mutableStateOf("") }
-    var categoriaId by remember { mutableStateOf("cat_1") }
-    var categoriaNombre by remember { mutableStateOf("General") }
-    var categoriaEmoji by remember { mutableStateOf("💰") }
+    var categoriaSeleccionada by remember { mutableStateOf<Categoria?>(null) }
     var descripcion by remember { mutableStateOf("") }
     var errorMonto by remember { mutableStateOf(false) }
+    var mostrarMenuCategorias by remember { mutableStateOf(false) }
+
+    // ✅ NUEVO: Estado para mostrar información del presupuesto
+    var mostrarInfoPresupuesto by remember { mutableStateOf(false) }
+    var infoPresupuesto by remember { mutableStateOf("") }
+
+    // Seleccionar primera categoría por defecto según el tipo
+    LaunchedEffect(tipo) {
+        val categoriasPorTipo = categorias.filter { it.tipo.toTipoTransaccion() == tipo }
+        if (categoriaSeleccionada == null || categoriaSeleccionada?.tipo?.toTipoTransaccion() != tipo) {
+            categoriaSeleccionada = categoriasPorTipo.firstOrNull()
+        }
+    }
 
     AlertDialog(
         onDismissRequest = alDismiss,
@@ -518,21 +612,260 @@ private fun DialogoNuevaTransaccion(
         title = { Text("Nueva Transacción") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = tipo == TipoTransaccion.GASTO, onClick = { tipo = TipoTransaccion.GASTO }, label = { Text("Gasto") }, modifier = Modifier.weight(1f), leadingIcon = if (tipo == TipoTransaccion.GASTO) {{ Icon(Icons.Default.Check, contentDescription = null) }} else null)
-                    FilterChip(selected = tipo == TipoTransaccion.INGRESO, onClick = { tipo = TipoTransaccion.INGRESO }, label = { Text("Ingreso") }, modifier = Modifier.weight(1f), leadingIcon = if (tipo == TipoTransaccion.INGRESO) {{ Icon(Icons.Default.Check, contentDescription = null) }} else null)
+                // Selector de tipo
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = tipo == TipoTransaccion.GASTO,
+                        onClick = { tipo = TipoTransaccion.GASTO },
+                        label = { Text("Gasto") },
+                        modifier = Modifier.weight(1f),
+                        leadingIcon = if (tipo == TipoTransaccion.GASTO) {
+                            { Icon(Icons.Default.Check, contentDescription = null) }
+                        } else null
+                    )
+                    FilterChip(
+                        selected = tipo == TipoTransaccion.INGRESO,
+                        onClick = { tipo = TipoTransaccion.INGRESO },
+                        label = { Text("Ingreso") },
+                        modifier = Modifier.weight(1f),
+                        leadingIcon = if (tipo == TipoTransaccion.INGRESO) {
+                            { Icon(Icons.Default.Check, contentDescription = null) }
+                        } else null
+                    )
                 }
-                OutlinedTextField(value = monto, onValueChange = { monto = it; errorMonto = it.toDoubleOrNull() == null && it.isNotEmpty() }, label = { Text("Monto") }, modifier = Modifier.fillMaxWidth(), leadingIcon = { Text("S/.") }, isError = errorMonto, supportingText = if (errorMonto) {{ Text("Ingresa un monto válido") }} else null, singleLine = true)
-                OutlinedTextField(value = categoriaEmoji, onValueChange = { categoriaEmoji = it }, label = { Text("Emoji") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                OutlinedTextField(value = categoriaNombre, onValueChange = { categoriaNombre = it }, label = { Text("Categoría") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                OutlinedTextField(value = descripcion, onValueChange = { descripcion = it }, label = { Text("Descripción") }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 3)
+
+                // Campo de monto
+                OutlinedTextField(
+                    value = monto,
+                    onValueChange = {
+                        monto = it
+                        errorMonto = it.toDoubleOrNull() == null && it.isNotEmpty()
+                    },
+                    label = { Text("Monto") },
+                    modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = { Text("S/.") },
+                    isError = errorMonto,
+                    supportingText = if (errorMonto) {
+                        { Text("Ingresa un monto válido") }
+                    } else null,
+                    singleLine = true
+                )
+
+                // Selector de categoría
+                OutlinedCard(
+                    onClick = { mostrarMenuCategorias = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = categoriaSeleccionada?.emoji ?: "💰",
+                                style = MaterialTheme.typography.headlineSmall
+                            )
+                            Column {
+                                Text(
+                                    text = "Categoría",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = categoriaSeleccionada?.nombre ?: "Seleccionar",
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
+                        }
+                        Icon(
+                            Icons.Default.KeyboardArrowDown,
+                            contentDescription = null
+                        )
+                    }
+                }
+
+                // ✅ NUEVO: Mostrar información del presupuesto si es gasto
+                if (tipo == TipoTransaccion.GASTO && categoriaSeleccionada != null && categoriaSeleccionada!!.presupuestado > 0) {
+                    Button(
+                        onClick = {
+                            mostrarInfoPresupuesto = true
+                            infoPresupuesto = "ℹ️ Esta categoría tiene un presupuesto de S/. ${String.format("%.2f", categoriaSeleccionada!!.presupuestado)}. " +
+                                    "El gasto se descontará automáticamente."
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    ) {
+                        Icon(Icons.Default.Info, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Ver información del presupuesto")
+                    }
+                }
+
+                // Campo de descripción
+                OutlinedTextField(
+                    value = descripcion,
+                    onValueChange = { descripcion = it },
+                    label = { Text("Descripción") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                    maxLines = 3
+                )
             }
         },
         confirmButton = {
-            Button(onClick = { val montoDouble = monto.toDoubleOrNull() ?: 0.0; if (montoDouble > 0) { alConfirmar(tipo, montoDouble, categoriaId, categoriaNombre, categoriaEmoji, descripcion) } }, enabled = monto.toDoubleOrNull() != null && monto.toDoubleOrNull()!! > 0) {
+            Button(
+                onClick = {
+                    val montoDouble = monto.toDoubleOrNull() ?: 0.0
+                    categoriaSeleccionada?.let { cat ->
+                        if (montoDouble > 0) {
+                            alConfirmar(
+                                tipo,
+                                montoDouble,
+                                cat.id,
+                                cat.nombre,
+                                cat.emoji,
+                                descripcion
+                            )
+                        }
+                    }
+                },
+                enabled = monto.toDoubleOrNull() != null &&
+                        monto.toDoubleOrNull()!! > 0 &&
+                        categoriaSeleccionada != null
+            ) {
                 Text("Agregar")
             }
         },
-        dismissButton = { TextButton(onClick = alDismiss) { Text("Cancelar") } }
+        dismissButton = {
+            TextButton(onClick = alDismiss) {
+                Text("Cancelar")
+            }
+        }
     )
+
+    // ✅ NUEVO: Diálogo para información del presupuesto
+    if (mostrarInfoPresupuesto) {
+        AlertDialog(
+            onDismissRequest = { mostrarInfoPresupuesto = false },
+            icon = { Icon(Icons.Default.AccountBalance, contentDescription = null) },
+            title = { Text("Presupuesto") },
+            text = { Text(infoPresupuesto) },
+            confirmButton = {
+                TextButton(onClick = { mostrarInfoPresupuesto = false }) {
+                    Text("Entendido")
+                }
+            }
+        )
+    }
+
+    // Diálogo de selección de categorías
+    if (mostrarMenuCategorias) {
+        AlertDialog(
+            onDismissRequest = { mostrarMenuCategorias = false },
+            icon = { Icon(Icons.Default.Category, contentDescription = null) },
+            title = { Text("Seleccionar Categoría") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val categoriasFiltradas = categorias.filter { it.tipo.toTipoTransaccion() == tipo }
+
+                    if (categoriasFiltradas.isEmpty()) {
+                        Text(
+                            text = "No hay categorías disponibles para ${if (tipo == TipoTransaccion.GASTO) "gastos" else "ingresos"}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    } else {
+                        categoriasFiltradas.forEach { categoria ->
+                            Card(
+                                onClick = {
+                                    categoriaSeleccionada = categoria
+                                    mostrarMenuCategorias = false
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (categoriaSeleccionada?.id == categoria.id) {
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.surfaceVariant
+                                    }
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = categoria.emoji,
+                                        style = MaterialTheme.typography.headlineMedium
+                                    )
+                                    Text(
+                                        text = categoria.nombre,
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    if (categoria.presupuestado > 0 && categoria.tipo == TipoCategoria.GASTO) {
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Badge(
+                                            containerColor = MaterialTheme.colorScheme.primary,
+                                            contentColor = MaterialTheme.colorScheme.onPrimary
+                                        ) {
+                                            Text("S/. ${String.format("%.0f", categoria.presupuestado)}")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    OutlinedCard(
+                        onClick = {
+                            mostrarMenuCategorias = false
+                            alDismiss()
+                            alNavegar("categorias")
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "Crear nueva categoría",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { mostrarMenuCategorias = false }) {
+                    Text("Cerrar")
+                }
+            }
+        )
+    }
 }
