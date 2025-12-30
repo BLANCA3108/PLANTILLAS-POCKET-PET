@@ -59,7 +59,9 @@ enum class DificultadBuscaMinas(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaBuscaMinasJuego() {
+fun PantallaBuscaMinasJuego(
+    onVolver: () -> Unit = {}
+) {
     var estadoJuego by remember { mutableStateOf(EstadoJuegoBuscaMinas()) }
     var modoMarcar by remember { mutableStateOf(false) }
 

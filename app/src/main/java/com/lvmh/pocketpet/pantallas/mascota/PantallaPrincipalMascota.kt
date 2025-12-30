@@ -116,7 +116,8 @@ fun PantallaPrincipalMascota(
         bottomBar = {
             BarraNavegacionInferior(
                 pantalla_seleccionada = pantalla_seleccionada,
-                onPantallaSeleccionada = { pantalla_seleccionada = it }
+                onPantallaSeleccionada = { pantalla_seleccionada = it },
+                onNavegar = onNavegar // 👈 PASAR el callback
             )
         }
     ) { paddingValues ->
@@ -260,6 +261,9 @@ fun PantallaPrincipalMascota(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // En tu PantallaPrincipalMascota.kt, actualiza estas secciones:
+
+// 1️⃣ ACTUALIZAR los botones de acción rápida (línea ~355 aproximadamente)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -292,6 +296,7 @@ fun PantallaPrincipalMascota(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+// 2️⃣ Segunda fila de botones
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -317,7 +322,7 @@ fun PantallaPrincipalMascota(
                         texto = "Evolución",
                         color = CoralPastel,
                         onClick = {
-                            onNavegar(RutasMascota.Evolucion.ruta)  // 👈 CAMBIAR
+                            onNavegar(RutasMascota.Evolucion.ruta)
                         }
                     )
                 }
@@ -600,7 +605,8 @@ fun BotonAccion(
 @Composable
 fun BarraNavegacionInferior(
     pantalla_seleccionada: Int,
-    onPantallaSeleccionada: (Int) -> Unit
+    onPantallaSeleccionada: (Int) -> Unit,
+    onNavegar: (String) -> Unit = {} // 👈 NUEVO parámetro
 ) {
     NavigationBar(
         containerColor = Color.White,
@@ -616,7 +622,10 @@ fun BarraNavegacionInferior(
             },
             label = { Text("Inicio", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
             selected = pantalla_seleccionada == 0,
-            onClick = { onPantallaSeleccionada(0) },
+            onClick = {
+                onPantallaSeleccionada(0)
+                onNavegar("inicio") // 👈 NAVEGAR a inicio
+            },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = GrisTexto,
                 selectedTextColor = GrisTexto,
@@ -635,7 +644,10 @@ fun BarraNavegacionInferior(
             },
             label = { Text("Mascota", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
             selected = pantalla_seleccionada == 1,
-            onClick = { onPantallaSeleccionada(1) },
+            onClick = {
+                onPantallaSeleccionada(1)
+                // Ya estamos en mascota, no navegar
+            },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = RosaPastel,
                 selectedTextColor = RosaPastel,
@@ -654,7 +666,10 @@ fun BarraNavegacionInferior(
             },
             label = { Text("Análisis", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
             selected = pantalla_seleccionada == 2,
-            onClick = { onPantallaSeleccionada(2) },
+            onClick = {
+                onPantallaSeleccionada(2)
+                onNavegar(RutasMascota.Estadisticas.ruta) // 👈 O la ruta que uses para análisis
+            },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = GrisTexto,
                 selectedTextColor = GrisTexto,
@@ -673,7 +688,11 @@ fun BarraNavegacionInferior(
             },
             label = { Text("Más", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
             selected = pantalla_seleccionada == 3,
-            onClick = { onPantallaSeleccionada(3) },
+            onClick = {
+                onPantallaSeleccionada(3)
+                // Mostrar menú o navegar a configuración
+                onNavegar("configuracion") // 👈 O donde quieras
+            },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = GrisTexto,
                 selectedTextColor = GrisTexto,
@@ -893,6 +912,7 @@ fun obtenerEmojiMascota(salud: Int): String {
 }
 
 @Preview(showBackground = true, showSystemUi = true)
+
 @Composable
 fun PreviewPantallaMascota() {
     MascotaFinancieraTheme {

@@ -52,7 +52,9 @@ data class EstadoJuegoMonedas(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaAtrapaMonedasJuego() {
+fun PantallaAtrapaMonedasJuego(
+    onVolver: () -> Unit = {}
+) {
     var estadoJuego by remember { mutableStateOf(EstadoJuegoMonedas()) }
     var monedas by remember { mutableStateOf<List<Moneda>>(emptyList()) }
     var siguienteId by remember { mutableStateOf(0) }

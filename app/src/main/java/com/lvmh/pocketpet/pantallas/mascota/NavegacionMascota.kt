@@ -1,43 +1,36 @@
 package com.lvmh.pocketpet.pantallas.mascota
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-
-// ================== RUTAS ==================
-sealed class RutasMascota(val ruta: String) {
-    object Principal : RutasMascota("mascota_principal")
-    object Cuidar : RutasMascota("mascota_cuidar")
-    object Logros : RutasMascota("mascota_logros")
-    object Desafios : RutasMascota("mascota_desafios")
-    object Evolucion : RutasMascota("mascota_evolucion")
-    object Mensajes : RutasMascota("mascota_mensajes")
-    object Diario : RutasMascota("mascota_diario")
-    object Personalizar : RutasMascota("mascota_personalizar")
-    object Habitacion : RutasMascota("mascota_habitacion")
-    object Estadisticas : RutasMascota("mascota_estadisticas")
-    object MenuJuegos : RutasMascota("mascota_juegos")
-    object BuscaMinas : RutasMascota("juego_buscaminas")
-    object AtrapaMonedas : RutasMascota("juego_atrapamonedas")
-}
+// ✅ IMPORTS DE LOS JUEGOS (paquete diferente)
+import com.example.mascotafinanciera.pantallas.juegos.PantallaAtrapaMonedasJuego
+import com.example.mascotafinanciera.pantallas.juegos.PantallaBuscaMinasJuego
+import com.example.mascotafinanciera.pantallas.juegos.PantallaMenuJuegos
 
 // ================== NAVEGACIÓN ==================
 @Composable
-fun NavegacionMascota(
-    onVolverPrincipal: (() -> Unit)? = null  // ✅ Parámetro opcional
-) {
+fun NavegacionMascota(onVolverPrincipal: (() -> Unit)? = null) {
     val navController = rememberNavController()
 
     NavHost(
         navController = navController,
         startDestination = RutasMascota.Principal.ruta
     ) {
+        // ===== PANTALLA PRINCIPAL =====
         composable(RutasMascota.Principal.ruta) {
             PantallaPrincipalMascota(
                 onNavegar = { ruta ->
-                    navController.navigate(ruta)
+                    when (ruta) {
+                        "inicio" -> {
+                            // 👈 Volver a la pantalla principal de la app
+                            onVolverPrincipal?.invoke()
+                        }
+                        else -> {
+                            navController.navigate(ruta)
+                        }
+                    }
                 }
             )
         }
@@ -45,9 +38,7 @@ fun NavegacionMascota(
         // ===== CUIDAR MASCOTA =====
         composable(RutasMascota.Cuidar.ruta) {
             PantallaCuidarMascota(
-                onVolver = {
-                    navController.popBackStack()
-                }
+                onVolver = { navController.popBackStack() }
             )
         }
 
@@ -79,59 +70,59 @@ fun NavegacionMascota(
             )
         }
 
-        // ===== DIARIO (pendiente) =====
+        // ===== DIARIO =====
         composable(RutasMascota.Diario.ruta) {
-            // PantallaDiario(
-            //     onVolver = { navController.popBackStack() }
-            // )
+            PantallaDiarioFinanciero(
+                onVolver = { navController.popBackStack() }
+            )
         }
 
-        // ===== PERSONALIZAR (pendiente) =====
+        // ===== PERSONALIZAR/TIENDA =====
         composable(RutasMascota.Personalizar.ruta) {
-            // PantallaPersonalizar(
-            //     onVolver = { navController.popBackStack() }
-            // )
+            PantallaPersonalizarMascota(
+                onVolver = { navController.popBackStack() }
+            )
         }
 
-        // ===== HABITACIÓN (pendiente) =====
+        // ===== HABITACIÓN =====
         composable(RutasMascota.Habitacion.ruta) {
-            // PantallaHabitacion(
-            //     onVolver = { navController.popBackStack() }
-            // )
+            PantallaHabitacionMascota(
+                onVolver = { navController.popBackStack() }
+            )
         }
 
-        // ===== ESTADÍSTICAS (pendiente) =====
+        // ===== ESTADÍSTICAS DETALLADAS =====
         composable(RutasMascota.Estadisticas.ruta) {
-            // PantallaEstadisticas(
-            //     onVolver = { navController.popBackStack() }
-            // )
+            PantallaEstadisticasMascota(
+                onVolver = { navController.popBackStack() }
+            )
         }
 
-        // ===== MENÚ DE JUEGOS (pendiente) =====
+        // ===== MENÚ DE JUEGOS =====
         composable(RutasMascota.MenuJuegos.ruta) {
-            // PantallaMenuJuegos(
-            //     onVolver = { navController.popBackStack() },
-            //     onJuegoSeleccionado = { juego ->
-            //         when (juego) {
-            //             "buscaminas" -> navController.navigate(RutasMascota.BuscaMinas.ruta)
-            //             "atrapamonedas" -> navController.navigate(RutasMascota.AtrapaMonedas.ruta)
-            //         }
-            //     }
-            // )
+            PantallaMenuJuegos(
+                onVolver = { navController.popBackStack() },
+                onJuegoSeleccionado = { juego ->
+                    when (juego) {
+                        "buscaminas" -> navController.navigate(RutasMascota.BuscaMinas.ruta)
+                        "atrapamonedas" -> navController.navigate(RutasMascota.AtrapaMonedas.ruta)
+                    }
+                }
+            )
         }
 
         // ===== JUEGO: BUSCA MINAS =====
         composable(RutasMascota.BuscaMinas.ruta) {
-            // JuegoBuscaMinas(
-            //     onVolver = { navController.popBackStack() }
-            // )
+            PantallaBuscaMinasJuego(
+                onVolver = { navController.popBackStack() }
+            )
         }
 
         // ===== JUEGO: ATRAPA MONEDAS =====
         composable(RutasMascota.AtrapaMonedas.ruta) {
-            // JuegoAtrapaMonedas(
-            //     onVolver = { navController.popBackStack() }
-            // )
+            PantallaAtrapaMonedasJuego(
+                onVolver = { navController.popBackStack() }
+            )
         }
     }
 }

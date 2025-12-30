@@ -3,76 +3,140 @@ package com.lvmh.pocketpet.presentacion.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.lvmh.pocketpet.presentacion.auth.AuthState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @HiltViewModel
-class AuthViewModel @Inject constructor() : ViewModel() {
+class AuthViewModel @Inject constructor(
+    private val auth: FirebaseAuth
+) : ViewModel() {
 
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
-
-    private val _uiState = MutableStateFlow<AuthState>(AuthState.Loading)
-    val uiState: StateFlow<AuthState> = _uiState
-
+    // Estado de autenticación
     private val _isAuthenticated = MutableStateFlow(false)
-    val isAuthenticated: StateFlow<Boolean> = _isAuthenticated
+    val isAuthenticated: StateFlow<Boolean> = _isAuthenticated.asStateFlow()
+
+    // Estado de la UI
+    private val _uiState = MutableStateFlow<AuthState>(AuthState.NotAuthenticated)
+    val uiState: StateFlow<AuthState> = _uiState.asStateFlow()
+
+    // Usuario actual
+    private val _currentUser = MutableStateFlow<FirebaseUser?>(null)
+    val currentUser: StateFlow<FirebaseUser?> = _currentUser.asStateFlow()
 
     init {
-        checkCurrentUser()
+        checkAuthStatus()
     }
 
-    private fun checkCurrentUser() {
-        val currentUser = auth.currentUser
-        _isAuthenticated.value = currentUser != null
+    // Verificar el estado de autenticación al iniciar
+    private fun checkAuthStatus() {
+        val user = auth.currentUser
+        _isAuthenticated.value = user != null
+        _currentUser.value = user
 
-        _uiState.value = if (currentUser != null) {
-            AuthState.Authenticated(currentUser.email ?: "")
+        if (user != null) {
+            _uiState.value = AuthState.Authenticated(user.email ?: "")
         } else {
-            AuthState.NotAuthenticated
+            _uiState.value = AuthState.NotAuthenticated
         }
     }
 
-    fun signInWithEmail(email: String, password: String) {
-        viewModelScope.launch {
-            _uiState.value = AuthState.Loading
-            try {
-                auth.signInWithEmailAndPassword(email, password).await()
-                _uiState.value = AuthState.Success("Inicio de sesión exitoso")
-                _isAuthenticated.value = true
-            } catch (e: Exception) {
-                _uiState.value = AuthState.Error(e.message ?: "Error desconocido")
-            }
-        }
-    }
-
+    // Registrar usuario con email y contraseña
     fun signUpWithEmail(email: String, password: String) {
+        if (email.isBlank() || password.isBlank()) {
+            _uiState.value = AuthState.Error("Por favor completa todos los campos")
+            return
+        }
+
+        if (password.length < 6) {
+            _uiState.value = AuthState.Error("La contraseña debe tener al menos 6 caracteres")
+            return
+        }
+
         viewModelScope.launch {
-            _uiState.value = AuthState.Loading
             try {
-                auth.createUserWithEmailAndPassword(email, password).await()
-                _uiState.value = AuthState.Success("Registro exitoso")
-                _isAuthenticated.value = true
+                _uiState.value = AuthState.Loading
+
+                val result = auth.createUserWithEmailAndPassword(email, password).await()
+                val user = result.user
+
+                if (user != null) {
+                    _isAuthenticated.value = true
+                    _currentUser.value = user
+                    _uiState.value = AuthState.Success("Cuenta creada exitosamente")
+                } else {
+                    _uiState.value = AuthState.Error("Error al crear la cuenta")
+                }
             } catch (e: Exception) {
-                _uiState.value = AuthState.Error(e.message ?: "Error en el registro")
+                _isAuthenticated.value = false
+                _uiState.value = AuthState.Error(
+                    when {
+                        e.message?.contains("email address is already in use") == true ->
+                            "Este correo ya está registrado"
+                        e.message?.contains("network") == true ->
+                            "Error de conexión. Verifica tu internet"
+                        else -> "Error: ${e.localizedMessage}"
+                    }
+                )
             }
         }
     }
 
+    // Iniciar sesión con email y contraseña
+    fun signInWithEmail(email: String, password: String) {
+        if (email.isBlank() || password.isBlank()) {
+            _uiState.value = AuthState.Error("Por favor completa todos los campos")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                _uiState.value = AuthState.Loading
+
+                val result = auth.signInWithEmailAndPassword(email, password).await()
+                val user = result.user
+
+                if (user != null) {
+                    _isAuthenticated.value = true
+                    _currentUser.value = user
+                    _uiState.value = AuthState.Success("Bienvenido de nuevo")
+                } else {
+                    _uiState.value = AuthState.Error("Error al iniciar sesión")
+                }
+            } catch (e: Exception) {
+                _isAuthenticated.value = false
+                _uiState.value = AuthState.Error(
+                    when {
+                        e.message?.contains("password is invalid") == true ||
+                                e.message?.contains("no user record") == true ->
+                            "Correo o contraseña incorrectos"
+                        e.message?.contains("network") == true ->
+                            "Error de conexión. Verifica tu internet"
+                        else -> "Error: ${e.localizedMessage}"
+                    }
+                )
+            }
+        }
+    }
+
+    // Cerrar sesión
     fun signOut() {
         auth.signOut()
         _isAuthenticated.value = false
+        _currentUser.value = null
         _uiState.value = AuthState.NotAuthenticated
     }
-}
 
-sealed class AuthState {
-    object Loading : AuthState()
-    object NotAuthenticated : AuthState()
-    data class Authenticated(val email: String) : AuthState()
-    data class Success(val message: String) : AuthState()
-    data class Error(val message: String) : AuthState()
+    // Limpiar errores
+    fun clearError() {
+        if (_uiState.value is AuthState.Error) {
+            _uiState.value = AuthState.NotAuthenticated
+        }
+    }
 }

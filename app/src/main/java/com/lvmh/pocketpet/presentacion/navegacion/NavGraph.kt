@@ -1,45 +1,77 @@
 package com.lvmh.pocketpet.presentacion.navegacion
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.lvmh.pocketpet.presentacion.pantallas.PantallaPrincipal
-import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaEstadisticas
-import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaEstadisticasCategorias
-import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaTendencias
-import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaComparativos
-import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaReportes
-import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaMetas
-import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaCalendario
-import com.lvmh.pocketpet.pantallas.PantallaPresupuestos
-import com.lvmh.pocketpet.pantallas.Configuracion
 import com.lvmh.pocketpet.pantallas.Categorias
-import com.lvmh.pocketpet.pantallas.MiPerfil
-import com.lvmh.pocketpet.viewmodels.TransaccionViewModel
-import com.lvmh.pocketpet.presentacion.viewmodels.EstadisticasViewModel
-import com.lvmh.pocketpet.presentacion.viewmodels.PresupuestoViewModel
-import com.lvmh.pocketpet.pantallas.mascota.NavegacionMascota
+import com.lvmh.pocketpet.pantallas.Configuracion
 import com.lvmh.pocketpet.pantallas.Logo
+import com.lvmh.pocketpet.pantallas.MiPerfil
 import com.lvmh.pocketpet.pantallas.Slide1
 import com.lvmh.pocketpet.pantallas.Slide2
 import com.lvmh.pocketpet.pantallas.Slide3
+import com.lvmh.pocketpet.pantallas.mascota.NavegacionMascota
+import com.lvmh.pocketpet.presentacion.auth.LoginScreen
+import com.lvmh.pocketpet.presentacion.auth.RegistroScreen
+import com.lvmh.pocketpet.presentacion.pantallas.PantallaPrincipal
+import com.lvmh.pocketpet.pantallas.PantallaPresupuestos
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaCalendario
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaComparativos
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaEstadisticas
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaEstadisticasCategorias
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaMetas
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaReportes
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaTendencias
+import com.lvmh.pocketpet.presentacion.viewmodels.AuthViewModel
+import com.lvmh.pocketpet.presentacion.viewmodels.EstadisticasViewModel
+import com.lvmh.pocketpet.presentacion.viewmodels.PresupuestoViewModel
+import com.lvmh.pocketpet.viewmodels.TransaccionViewModel
 
 @Composable
 fun PocketPetNavGraph() {
     val navController = rememberNavController()
 
-    // ID de usuario temporal - reemplaza con tu sistema de autenticación real
-    val usuarioId = "usuario_demo_001"
+    // ViewModel de autenticación
+    val authViewModel: AuthViewModel = hiltViewModel()
+    val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
+
+    // Determinar la pantalla inicial basada en la autenticación
+    val startDestination = if (isAuthenticated) {
+        Routes.PRINCIPAL
+    } else {
+        Routes.LOGO
+    }
 
     NavHost(
         navController = navController,
-        startDestination = Routes.LOGO
+        startDestination = startDestination
     ) {
 
         // ===============================
-        // 🔹 ONBOARDING
+        // 🔐 AUTENTICACIÓN
+        // ===============================
+
+        composable(Routes.LOGIN) {
+            LoginScreen(
+                navController = navController,
+                authViewModel = authViewModel
+            )
+        }
+
+        composable(Routes.REGISTRO) {
+            RegistroScreen(
+                navController = navController,
+                authViewModel = authViewModel
+            )
+        }
+
+        // ===============================
+        // 🎯 ONBOARDING
         // ===============================
 
         composable(Routes.LOGO) {
@@ -71,7 +103,7 @@ fun PocketPetNavGraph() {
         composable(Routes.SLIDE3) {
             Slide3(
                 onNext = {
-                    navController.navigate(Routes.PRINCIPAL) {
+                    navController.navigate(Routes.LOGIN) {
                         popUpTo(Routes.LOGO) { inclusive = true }
                     }
                 }
@@ -79,21 +111,30 @@ fun PocketPetNavGraph() {
         }
 
         // ===============================
-        // 🔹 APP PRINCIPAL
+        // 📱 APP PRINCIPAL
         // ===============================
 
         composable(Routes.PRINCIPAL) {
-            val viewModel: TransaccionViewModel = hiltViewModel()
-            PantallaPrincipal(
-                viewModel = viewModel,
-                alNavegar = { ruta ->
-                    navController.navigate(ruta)
+            if (isAuthenticated) {
+                val viewModel: TransaccionViewModel = hiltViewModel()
+                PantallaPrincipal(
+                    viewModel = viewModel,
+                    alNavegar = { ruta ->
+                        navController.navigate(ruta)
+                    }
+                )
+            } else {
+                // Redirigir al login si no está autenticado
+                LaunchedEffect(Unit) {
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.PRINCIPAL) { inclusive = true }
+                    }
                 }
-            )
+            }
         }
 
         // ===============================
-        // 🔹 PERFIL
+        // 👤 PERFIL
         // ===============================
 
         composable(Routes.MI_PERFIL) {
@@ -105,18 +146,8 @@ fun PocketPetNavGraph() {
         }
 
         // ===============================
-        // 🔹 SECCIÓN ANÁLISIS
+        // 📊 ESTADÍSTICAS Y ANÁLISIS
         // ===============================
-
-        composable("comparativos") {
-            val viewModel: EstadisticasViewModel = hiltViewModel()
-            PantallaComparativos(
-                viewModel = viewModel,
-                alRegresar = {
-                    navController.popBackStack()
-                }
-            )
-        }
 
         composable(Routes.ESTADISTICAS) {
             val viewModel: EstadisticasViewModel = hiltViewModel()
@@ -128,9 +159,39 @@ fun PocketPetNavGraph() {
             )
         }
 
-        composable("estadisticas_categorias") {
+        composable(Routes.ESTADISTICAS_CATEGORIAS) {
             val viewModel: EstadisticasViewModel = hiltViewModel()
             PantallaEstadisticasCategorias(
+                viewModel = viewModel,
+                alRegresar = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Routes.COMPARATIVOS) {
+            val viewModel: EstadisticasViewModel = hiltViewModel()
+            PantallaComparativos(
+                viewModel = viewModel,
+                alRegresar = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Routes.TENDENCIAS) {
+            val viewModel: EstadisticasViewModel = hiltViewModel()
+            PantallaTendencias(
+                viewModel = viewModel,
+                alRegresar = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Routes.REPORTES) {
+            val viewModel: EstadisticasViewModel = hiltViewModel()
+            PantallaReportes(
                 viewModel = viewModel,
                 alRegresar = {
                     navController.popBackStack()
@@ -142,12 +203,16 @@ fun PocketPetNavGraph() {
             val viewModel: EstadisticasViewModel = hiltViewModel()
             PantallaCalendario(
                 viewModel = viewModel,
-                usuarioId = usuarioId,
+                usuarioId = "usuario_demo_001",
                 alRegresar = {
                     navController.popBackStack()
                 }
             )
         }
+
+        // ===============================
+        // 💰 PRESUPUESTOS Y METAS
+        // ===============================
 
         composable(Routes.PRESUPUESTOS) {
             val viewModel: PresupuestoViewModel = hiltViewModel()
@@ -159,29 +224,9 @@ fun PocketPetNavGraph() {
             )
         }
 
-        composable("reportes") {
-            val viewModel: EstadisticasViewModel = hiltViewModel()
-            PantallaReportes(
-                viewModel = viewModel,
-                alRegresar = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable("tendencias") {
-            val viewModel: EstadisticasViewModel = hiltViewModel()
-            PantallaTendencias(
-                viewModel = viewModel,
-                alRegresar = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable("metas") {
+        composable(Routes.METAS) {
             PantallaMetas(
-                usuarioId = usuarioId,
+                usuarioId = "usuario_demo_001",
                 alRegresar = {
                     navController.popBackStack()
                 }
@@ -189,10 +234,10 @@ fun PocketPetNavGraph() {
         }
 
         // ===============================
-        // 🔹 SECCIÓN MÁS
+        // ⚙️ CONFIGURACIÓN
         // ===============================
 
-        composable("configuracion") {
+        composable(Routes.CONFIGURACION) {
             Configuracion(
                 onBack = {
                     navController.popBackStack()
@@ -200,7 +245,7 @@ fun PocketPetNavGraph() {
             )
         }
 
-        composable("categorias") {
+        composable(Routes.CATEGORIAS) {
             Categorias(
                 onBack = {
                     navController.popBackStack()
@@ -209,11 +254,40 @@ fun PocketPetNavGraph() {
         }
 
         // ===============================
-        // 🔹 MASCOTA
-        // ===============================
+// 🐾 MASCOTA
+// ===============================
 
         composable(Routes.MASCOTA) {
-            NavegacionMascota()
+            NavegacionMascota(
+                onVolverPrincipal = {
+                    navController.navigate(Routes.PRINCIPAL) {
+                        popUpTo(Routes.PRINCIPAL) { inclusive = false }
+                    }
+                }
+            )
         }
     }
 }
+
+// 👇 COMENTAMOS ESTAS HASTA QUE LAS CREES
+/*
+composable(Routes.SELECCIONAR_MASCOTA) {
+    PantallaSeleccionMascota(
+        onMascotaSeleccionada = { mascotaTipo ->
+            navController.navigate(Routes.TUTORIAL_MASCOTA) {
+                popUpTo(Routes.SELECCIONAR_MASCOTA) { inclusive = true }
+            }
+        }
+    )
+}
+
+composable(Routes.TUTORIAL_MASCOTA) {
+    PantallaTutorialMascota(
+        onFinalizarTutorial = {
+            navController.navigate(Routes.MASCOTA) {
+                popUpTo(Routes.TUTORIAL_MASCOTA) { inclusive = true }
+            }
+        }
+    )
+}
+*/

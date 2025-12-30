@@ -57,7 +57,10 @@ data class EstadisticasJuegos(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaMenuJuegos() {
+fun PantallaMenuJuegos(
+    onVolver: () -> Unit = {},
+    onJuegoSeleccionado: (String) -> Unit = {}
+) {
     var estadisticas by remember { mutableStateOf(EstadisticasJuegos()) }
     var monedasActuales by remember { mutableStateOf(850) }
     var mostrarInfo by remember { mutableStateOf(false) }
@@ -90,7 +93,7 @@ fun PantallaMenuJuegos() {
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = { /* Volver */ }) {
+                    IconButton(onClick = onVolver) {
                         Icon(
                             Icons.Default.ArrowBack,
                             contentDescription = "Volver",

@@ -54,7 +54,9 @@ data class DatoGrafico(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaEstadisticasMascota() {
+fun PantallaEstadisticasMascota(
+    onVolver: () -> Unit = {}
+) {
     val estadisticas = remember { EstadisticasCompletas() }
     val datosGrafico = remember { obtenerDatosGraficoSemana() }
 
@@ -74,7 +76,7 @@ fun PantallaEstadisticasMascota() {
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = { /* Volver */ }) {
+                    IconButton(onClick = onVolver) {  // ✅ CAMBIAR { /* Volver */ }
                         Icon(
                             Icons.Default.ArrowBack,
                             contentDescription = "Volver",
