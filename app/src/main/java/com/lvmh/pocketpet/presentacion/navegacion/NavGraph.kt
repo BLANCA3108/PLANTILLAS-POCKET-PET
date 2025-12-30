@@ -17,18 +17,53 @@ import com.lvmh.pocketpet.pantallas.Logo
 import com.lvmh.pocketpet.pantallas.Slide1
 import com.lvmh.pocketpet.pantallas.Slide2
 import com.lvmh.pocketpet.pantallas.Slide3
+import com.lvmh.pocketpet.presentacion.viewmodels.AuthViewModel
+import com.lvmh.pocketpet.presentacion.auth.LoginScreen
+import com.lvmh.pocketpet.presentacion.auth.RegistroScreen
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 
 @Composable
 fun PocketPetNavGraph() {
     val navController = rememberNavController()
+    val authViewModel: AuthViewModel = hiltViewModel()
+
+    // Estado de autenticación
+    val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
+
+    // Determinar la pantalla inicial basada en la autenticación
+    val startDestination = if (isAuthenticated) {
+        Routes.PRINCIPAL
+    } else {
+        Routes.LOGO  // O Routes.LOGO si quieres mantener el onboarding primero
+    }
 
     NavHost(
         navController = navController,
-        startDestination = Routes.LOGO   // 👈 CAMBIO CLAVE
+        startDestination = startDestination
     ) {
 
         // ===============================
-        // 🔹 ONBOARDING
+        // 🔐 FLUJO DE AUTENTICACIÓN
+        // ===============================
+
+        composable(Routes.LOGIN) {
+            LoginScreen(
+                navController = navController,
+                authViewModel = authViewModel
+            )
+        }
+
+        composable(Routes.REGISTRO) {
+            RegistroScreen(
+                navController = navController,
+                authViewModel = authViewModel
+            )
+        }
+
+        // ===============================
+        // 🎯 ONBOARDING (Opcional - puedes decidir si mantenerlo)
         // ===============================
 
         composable(Routes.LOGO) {
@@ -60,7 +95,7 @@ fun PocketPetNavGraph() {
         composable(Routes.SLIDE3) {
             Slide3(
                 onNext = {
-                    navController.navigate(Routes.PRINCIPAL) {
+                    navController.navigate(Routes.LOGIN) {  // Cambiado a LOGIN
                         popUpTo(Routes.LOGO) { inclusive = true }
                     }
                 }
@@ -68,8 +103,27 @@ fun PocketPetNavGraph() {
         }
 
         // ===============================
-        // 🔹 APP PRINCIPAL (TU CÓDIGO ORIGINAL)
+        // 📱 APP PRINCIPAL (Solo para usuarios autenticados)
         // ===============================
+
+        composable(Routes.PRINCIPAL) {
+            if (isAuthenticated) {
+                val viewModel: TransaccionViewModel = hiltViewModel()
+                PantallaPrincipal(
+                    viewModel = viewModel,
+                    alNavegar = { ruta ->
+                        navController.navigate(ruta)
+                    },
+                )
+            } else {
+                // Redirigir al login si no está autenticado
+                LaunchedEffect(Unit) {
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.PRINCIPAL) { inclusive = true }
+                    }
+                }
+            }
+        }
 
         composable(Routes.PRINCIPAL) {
             val viewModel: TransaccionViewModel = hiltViewModel()

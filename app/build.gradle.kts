@@ -117,7 +117,10 @@ dependencies {
     // DATASTORE (SharedPreferences moderno)
     // ============================================
     implementation("androidx.datastore:datastore-preferences:1.1.1")
-
+    // 🔑 Google Sign-In
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+    implementation("androidx.compose.material3:material3:1.2.1")
+    implementation("androidx.compose.material:material-icons-extended:1.6.7")
     // ============================================
     // COIL (Carga de imágenes - para avatar mascota)
     // ============================================
