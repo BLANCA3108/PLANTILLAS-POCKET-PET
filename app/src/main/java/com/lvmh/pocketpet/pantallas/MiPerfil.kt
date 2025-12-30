@@ -2,6 +2,7 @@ package com.lvmh.pocketpet.pantallas
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -19,7 +20,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,22 +27,25 @@ import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MiPerfil(onBack: () -> Unit = {}) {
-    // Colores cálidos rosado y morado suave
+fun MiPerfil(
+    onBack: () -> Unit = {}
+) {
+    // Colores
     val rosadoSuave = Color(0xFFFFB6C1)
     val moradoSuave = Color(0xFFE6B0FF)
     val rosadoClaro = Color(0xFFFFF0F5)
     val moradoClaro = Color(0xFFF8F0FF)
+    val azulMasculino = Color(0xFF64B5F6)
+    val rosadoFemenino = Color(0xFFF48FB1)
 
     // Estados
-    var totalIngresos by remember { mutableStateOf(15420.50) }
-    var totalGastos by remember { mutableStateOf(8920.00) }
-    var balanceActual by remember { mutableStateOf(6500.50) }
-    var transacciones by remember { mutableStateOf(47) }
-    var metaMes by remember { mutableStateOf(10000.0) }
-    var progresoMeta by remember { mutableStateOf(6500.0) }
+    var nombre by remember { mutableStateOf("") }
+    var usuario by remember { mutableStateOf("") }
+    var generoSeleccionado by remember { mutableStateOf<String?>(null) }
+    var mostrarDialogoNombre by remember { mutableStateOf(false) }
+    var mostrarDialogoUsuario by remember { mutableStateOf(false) }
 
-    // Animación de entrada
+    // Animación
     var startAnimation by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         delay(100)
@@ -63,10 +66,7 @@ fun MiPerfil(onBack: () -> Unit = {}) {
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(
-                        rosadoClaro,
-                        moradoClaro
-                    )
+                    colors = listOf(rosadoClaro, moradoClaro)
                 )
             )
     ) {
@@ -83,10 +83,7 @@ fun MiPerfil(onBack: () -> Unit = {}) {
                                 onClick = onBack,
                                 modifier = Modifier
                                     .size(44.dp)
-                                    .shadow(
-                                        elevation = 8.dp,
-                                        shape = CircleShape
-                                    )
+                                    .shadow(elevation = 8.dp, shape = CircleShape)
                                     .background(Color.White, CircleShape)
                             ) {
                                 Icon(
@@ -120,118 +117,87 @@ fun MiPerfil(onBack: () -> Unit = {}) {
                     .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-                // Avatar con animación
-                AvatarAnimado(moradoSuave)
+                // Avatar animado
+                AvatarAnimado(moradoSuave, generoSeleccionado)
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Nombre de usuario
+                // Nombre y usuario mostrados
                 Text(
-                    text = "Usuario PocketPet",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
+                    text = nombre.ifEmpty { "Sin nombre" },
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     color = moradoSuave
                 )
 
+                Spacer(modifier = Modifier.height(4.dp))
+
                 Text(
-                    text = "usuario@pocketpet.com",
-                    fontSize = 14.sp,
-                    color = Color.Gray
+                    text = "@${usuario.ifEmpty { "usuario" }}",
+                    fontSize = 16.sp,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Medium
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Título de estadísticas
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ShoppingCart,
-                        contentDescription = null,
-                        tint = rosadoSuave
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "RESUMEN FINANCIERO",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color(0xFF555555)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Tarjetas de estadísticas
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    TarjetaEstadisticaMejorada(
-                        titulo = "Total Ingresos",
-                        valor = "S/. ${String.format("%.2f", totalIngresos)}",
-                        icono = "💰",
-                        color = Color(0xFF4CAF50),
-                        modifier = Modifier.weight(1f)
-                    )
-                    TarjetaEstadisticaMejorada(
-                        titulo = "Total Gastos",
-                        valor = "S/. ${String.format("%.2f", totalGastos)}",
-                        icono = "💸",
-                        color = Color(0xFFFF6B6B),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    TarjetaEstadisticaMejorada(
-                        titulo = "Balance Actual",
-                        valor = "S/. ${String.format("%.2f", balanceActual)}",
-                        icono = "💳",
-                        color = moradoSuave,
-                        modifier = Modifier.weight(1f)
-                    )
-                    TarjetaEstadisticaMejorada(
-                        titulo = "Transacciones",
-                        valor = "$transacciones",
-                        icono = "📊",
-                        color = rosadoSuave,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Meta del mes
-                MetaDelMesMejorada(
-                    progreso = progresoMeta,
-                    meta = metaMes,
-                    colorProgreso = moradoSuave
+                // Sección de información personal
+                SeccionInformacionPersonal(
+                    nombre = nombre,
+                    usuario = usuario,
+                    generoSeleccionado = generoSeleccionado,
+                    onEditarNombre = { mostrarDialogoNombre = true },
+                    onEditarUsuario = { mostrarDialogoUsuario = true },
+                    onSeleccionarGenero = { generoSeleccionado = it },
+                    rosadoSuave = rosadoSuave,
+                    moradoSuave = moradoSuave,
+                    azulMasculino = azulMasculino,
+                    rosadoFemenino = rosadoFemenino
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Mascota del usuario
-                MascotaUsuario()
-
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(40.dp))
             }
         }
+    }
+
+    // Diálogo para editar nombre
+    if (mostrarDialogoNombre) {
+        DialogoEdicion(
+            titulo = "Editar Nombre",
+            valor = nombre,
+            onDismiss = { mostrarDialogoNombre = false },
+            onConfirm = { nuevoNombre ->
+                nombre = nuevoNombre
+                mostrarDialogoNombre = false
+            },
+            placeholder = "Ingresa tu nombre completo",
+            color = moradoSuave
+        )
+    }
+
+    // Diálogo para editar usuario
+    if (mostrarDialogoUsuario) {
+        DialogoEdicion(
+            titulo = "Editar Usuario",
+            valor = usuario,
+            onDismiss = { mostrarDialogoUsuario = false },
+            onConfirm = { nuevoUsuario ->
+                usuario = nuevoUsuario
+                mostrarDialogoUsuario = false
+            },
+            placeholder = "Ingresa tu nombre de usuario",
+            color = moradoSuave
+        )
     }
 }
 
 /**
- * Avatar animado
+ * Avatar animado con género
  */
 @Composable
-private fun AvatarAnimado(color: Color) {
+private fun AvatarAnimado(color: Color, genero: String?) {
     val infiniteTransition = rememberInfiniteTransition(label = "avatar")
 
     val scale by infiniteTransition.animateFloat(
@@ -254,6 +220,12 @@ private fun AvatarAnimado(color: Color) {
         label = "rotation"
     )
 
+    val emoji = when (genero) {
+        "Masculino" -> "👨"
+        "Femenino" -> "👩"
+        else -> "👤"
+    }
+
     Box(
         modifier = Modifier
             .size(140.dp)
@@ -266,105 +238,38 @@ private fun AvatarAnimado(color: Color) {
             )
             .background(
                 brush = Brush.radialGradient(
-                    colors = listOf(
-                        Color.White,
-                        Color(0xFFF8F0FF)
-                    )
+                    colors = listOf(Color.White, Color(0xFFF8F0FF))
                 ),
                 shape = CircleShape
             ),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "🐕",
-            fontSize = 80.sp
-        )
+        Text(text = emoji, fontSize = 80.sp)
     }
 }
 
 /**
- * Tarjeta de estadística mejorada
+ * Sección de información personal
  */
 @Composable
-private fun TarjetaEstadisticaMejorada(
-    titulo: String,
-    valor: String,
-    icono: String,
-    color: Color,
-    modifier: Modifier = Modifier
+private fun SeccionInformacionPersonal(
+    nombre: String,
+    usuario: String,
+    generoSeleccionado: String?,
+    onEditarNombre: () -> Unit,
+    onEditarUsuario: () -> Unit,
+    onSeleccionarGenero: (String) -> Unit,
+    rosadoSuave: Color,
+    moradoSuave: Color,
+    azulMasculino: Color,
+    rosadoFemenino: Color
 ) {
-    Card(
-        modifier = modifier
-            .height(110.dp)
-            .shadow(
-                elevation = 8.dp,
-                shape = RoundedCornerShape(20.dp)
-            ),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = color.copy(alpha = 0.15f)
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = icono,
-                fontSize = 32.sp
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = titulo,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF555555),
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = valor,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = color,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
-/**
- * Sección de Meta del Mes mejorada
- */
-@Composable
-private fun MetaDelMesMejorada(
-    progreso: Double,
-    meta: Double,
-    colorProgreso: Color
-) {
-    val porcentaje = (progreso / meta * 100).toFloat()
-
-    // Animación de la barra de progreso
-    val animatedProgress by animateFloatAsState(
-        targetValue = porcentaje / 100f,
-        animationSpec = tween(1000, easing = EaseOutCubic),
-        label = "progress"
-    )
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(
-                elevation = 8.dp,
-                shape = RoundedCornerShape(20.dp)
-            ),
+            .shadow(elevation = 8.dp, shape = RoundedCornerShape(20.dp)),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
             modifier = Modifier
@@ -373,219 +278,255 @@ private fun MetaDelMesMejorada(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
-                        tint = Color(0xFFFFD700),
-                        modifier = Modifier.size(28.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "META DEL MES",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = colorProgreso
-                    )
-                }
-                Text(
-                    text = "${porcentaje.toInt()}%",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = colorProgreso
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Barra de progreso animada
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(16.dp)
-                    .background(Color(0xFFE0E0E0), RoundedCornerShape(8.dp))
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(animatedProgress)
-                        .fillMaxHeight()
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(
-                                    colorProgreso,
-                                    colorProgreso.copy(alpha = 0.7f)
-                                )
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "${porcentaje.toInt()}% completado",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Gray
-                )
-                Text(
-                    text = "S/. ${String.format("%.0f", progreso)} / S/. ${String.format("%.0f", meta)}",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF555555)
-                )
-            }
-        }
-    }
-}
-
-/**
- * Sección de mascota del usuario
- */
-@Composable
-private fun MascotaUsuario() {
-    val infiniteTransition = rememberInfiniteTransition(label = "mascota")
-
-    val bounce by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = -10f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = EaseInOutCubic),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "bounce"
-    )
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(
-                elevation = 8.dp,
-                shape = RoundedCornerShape(20.dp)
-            ),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Default.Favorite,
+                    imageVector = Icons.Default.Person,
                     contentDescription = null,
-                    tint = Color(0xFFFF6B6B),
+                    tint = moradoSuave,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "TU MASCOTA",
-                    fontSize = 16.sp,
+                    text = "INFORMACIÓN PERSONAL",
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color(0xFF555555)
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            Box(
-                modifier = Modifier.offset(y = bounce.dp)
-            ) {
-                Text(
-                    text = "🐕",
-                    fontSize = 80.sp
-                )
-            }
+            // Campo de nombre
+            CampoEditable(
+                label = "Nombre Completo",
+                valor = nombre.ifEmpty { "No configurado" },
+                icono = "👤",
+                onClick = onEditarNombre,
+                color = moradoSuave
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Campo de usuario
+            CampoEditable(
+                label = "Nombre de Usuario",
+                valor = usuario.ifEmpty { "No configurado" },
+                icono = "✨",
+                onClick = onEditarUsuario,
+                color = rosadoSuave
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Selector de género
             Text(
-                text = "Toby",
-                fontSize = 20.sp,
+                text = "Género",
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF555555)
+                color = Color(0xFF777777)
             )
 
-            Text(
-                text = "Nivel 5 • Feliz 😊",
-                fontSize = 14.sp,
-                color = Color.Gray
-            )
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Barras de estadísticas de mascota
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                BarraMascota("💚", "Salud", 0.8f, Color(0xFF4CAF50), Modifier.weight(1f))
-                BarraMascota("😊", "Felicidad", 0.9f, Color(0xFFFFD700), Modifier.weight(1f))
-                BarraMascota("🍖", "Hambre", 0.6f, Color(0xFFFF6B6B), Modifier.weight(1f))
+                BurbujaGenero(
+                    emoji = "👨",
+                    label = "Masculino",
+                    seleccionado = generoSeleccionado == "Masculino",
+                    onClick = { onSeleccionarGenero("Masculino") },
+                    color = azulMasculino,
+                    modifier = Modifier.weight(1f)
+                )
+
+                BurbujaGenero(
+                    emoji = "👩",
+                    label = "Femenino",
+                    seleccionado = generoSeleccionado == "Femenino",
+                    onClick = { onSeleccionarGenero("Femenino") },
+                    color = rosadoFemenino,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            if (generoSeleccionado != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = Color(0xFF4CAF50),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Género seleccionado: $generoSeleccionado",
+                        fontSize = 12.sp,
+                        color = Color(0xFF4CAF50),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }
 }
 
 /**
- * Barra de estadística de mascota
+ * Campo editable
  */
 @Composable
-private fun BarraMascota(
+private fun CampoEditable(
+    label: String,
+    valor: String,
+    icono: String,
+    onClick: () -> Unit,
+    color: Color
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .background(color.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = icono, fontSize = 28.sp)
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.Gray
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = valor,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (valor == "No configurado") Color.Gray else Color(0xFF333333)
+            )
+        }
+        Icon(
+            imageVector = Icons.Default.Edit,
+            contentDescription = "Editar",
+            tint = color,
+            modifier = Modifier.size(20.dp)
+        )
+    }
+}
+
+/**
+ * Burbuja de género
+ */
+@Composable
+private fun BurbujaGenero(
     emoji: String,
-    titulo: String,
-    progreso: Float,
+    label: String,
+    seleccionado: Boolean,
+    onClick: () -> Unit,
     color: Color,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
+    val scale by animateFloatAsState(
+        targetValue = if (seleccionado) 1.05f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "scale"
+    )
+
+    Card(
+        modifier = modifier
+            .height(100.dp)
+            .scale(scale)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (seleccionado) color.copy(alpha = 0.2f) else Color(0xFFF5F5F5)
+        ),
+        border = if (seleccionado) {
+            androidx.compose.foundation.BorderStroke(3.dp, color)
+        } else null
     ) {
-        Text(
-            text = emoji,
-            fontSize = 24.sp
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = titulo,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Medium,
-            color = Color.Gray
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(6.dp)
-                .background(Color(0xFFE0E0E0), RoundedCornerShape(3.dp))
+                .fillMaxSize()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(progreso)
-                    .fillMaxHeight()
-                    .background(color, RoundedCornerShape(3.dp))
+            Text(text = emoji, fontSize = 40.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = label,
+                fontSize = 13.sp,
+                fontWeight = if (seleccionado) FontWeight.ExtraBold else FontWeight.Medium,
+                color = if (seleccionado) color else Color.Gray
             )
         }
     }
 }
 
-// Preview
+/**
+ * Diálogo de edición
+ */
+@Composable
+private fun DialogoEdicion(
+    titulo: String,
+    valor: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+    placeholder: String,
+    color: Color
+) {
+    var textoEditado by remember { mutableStateOf(valor) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = titulo,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
+        },
+        text = {
+            OutlinedTextField(
+                value = textoEditado,
+                onValueChange = { textoEditado = it },
+                placeholder = { Text(placeholder) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = color,
+                    focusedLabelColor = color,
+                    cursorColor = color
+                )
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(textoEditado) },
+                colors = ButtonDefaults.buttonColors(containerColor = color)
+            ) {
+                Text("Guardar", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar", color = Color.Gray)
+            }
+        },
+        shape = RoundedCornerShape(20.dp)
+    )
+}
+
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewMiPerfil() {
