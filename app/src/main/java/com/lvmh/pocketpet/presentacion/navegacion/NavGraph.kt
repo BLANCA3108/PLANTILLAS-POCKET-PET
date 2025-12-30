@@ -16,6 +16,7 @@ import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaCalendario
 import com.lvmh.pocketpet.pantallas.PantallaPresupuestos
 import com.lvmh.pocketpet.pantallas.Configuracion
 import com.lvmh.pocketpet.pantallas.Categorias
+import com.lvmh.pocketpet.pantallas.MiPerfil
 import com.lvmh.pocketpet.viewmodels.TransaccionViewModel
 import com.lvmh.pocketpet.presentacion.viewmodels.EstadisticasViewModel
 import com.lvmh.pocketpet.presentacion.viewmodels.PresupuestoViewModel
@@ -87,6 +88,18 @@ fun PocketPetNavGraph() {
                 viewModel = viewModel,
                 alNavegar = { ruta ->
                     navController.navigate(ruta)
+                }
+            )
+        }
+
+        // ===============================
+        // 🔹 PERFIL
+        // ===============================
+
+        composable(Routes.MI_PERFIL) {
+            MiPerfil(
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }
