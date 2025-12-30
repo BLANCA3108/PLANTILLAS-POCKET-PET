@@ -1,179 +1,144 @@
-package com.lvmh.pocketpet.viewmodels
+package com.lvmh.pocketpet.presentacion.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lvmh.pocketpet.datos.repositorios.CategoriaRepository
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.lvmh.pocketpet.dominio.modelos.Categoria
 import com.lvmh.pocketpet.dominio.modelos.TipoCategoria
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
+data class EstadoCategorias(
+    val categorias: List<Categoria> = emptyList(),
+    val cargando: Boolean = false,
+    val error: String? = null
+)
+
 @HiltViewModel
-class CategoriasViewModel @Inject constructor(
-    private val categoriaRepository: CategoriaRepository
+class CategoriaViewModel @Inject constructor(
+    private val firestore: FirebaseFirestore,
+    private val auth: FirebaseAuth
 ) : ViewModel() {
 
-    // Estado de las categorías
-    private val _categorias = MutableStateFlow<List<Categoria>>(emptyList())
-    val categorias: StateFlow<List<Categoria>> = _categorias.asStateFlow()
+    private val _estado = MutableStateFlow(EstadoCategorias())
+    val estado: StateFlow<EstadoCategorias> = _estado.asStateFlow()
 
-    // Estado de carga
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    private var categoriasListener: ListenerRegistration? = null
+    private var usuarioId: String? = null
 
-    // Estado de error
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
-
-    // Filtro por tipo
-    private val _tipoFiltro = MutableStateFlow<TipoCategoria?>(null)
-    val tipoFiltro: StateFlow<TipoCategoria?> = _tipoFiltro.asStateFlow()
-
-    // Categorías filtradas
-    val categoriasFiltradas: StateFlow<List<Categoria>> = combine(
-        _categorias,
-        _tipoFiltro
-    ) { categorias, tipo ->
-        if (tipo == null) categorias
-        else categorias.filter { it.tipo == tipo }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    // Usuario ID (deberías obtenerlo de Firebase Auth)
-    private var usuarioId: String = ""
-
-    fun inicializar(userId: String) {
-        usuarioId = userId
-        cargarCategorias()
+    init {
+        inicializar()
     }
 
-    /**
-     * Cargar categorías desde el repositorio
-     */
-    fun cargarCategorias() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
+    fun inicializar() {
+        val userId = auth.currentUser?.uid
+        if (userId != null) {
+            usuarioId = userId
+            escucharCategorias(userId)
+        }
+    }
 
+    private fun escucharCategorias(userId: String) {
+        categoriasListener?.remove()
+        _estado.value = _estado.value.copy(cargando = true)
+
+        println("🔵 [CategoriaVM] Escuchando categorías del usuario: $userId")
+
+        categoriasListener = firestore
+            .collection("usuarios")
+            .document(userId)
+            .collection("categorias")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    println("❌ [CategoriaVM] Error: ${error.message}")
+                    _estado.value = _estado.value.copy(
+                        cargando = false,
+                        error = error.message
+                    )
+                    return@addSnapshotListener
+                }
+
+                val categorias = snapshot?.documents?.mapNotNull { doc ->
+                    try {
+                        Categoria(
+                            id = doc.id,
+                            nombre = doc.getString("nombre") ?: "",
+                            emoji = doc.getString("emoji") ?: "📊",
+                            tipo = TipoCategoria.valueOf(doc.getString("tipo") ?: "GASTO"),
+                            presupuestado = doc.getDouble("presupuestado") ?: 0.0
+                        )
+                    } catch (e: Exception) {
+                        println("❌ [CategoriaVM] Error parseando: ${e.message}")
+                        null
+                    }
+                } ?: emptyList()
+
+                println("✅ [CategoriaVM] Categorías cargadas: ${categorias.size}")
+                categorias.forEach {
+                    println("   - ${it.emoji} ${it.nombre} (${it.tipo}) - Presup: S/.${it.presupuestado}")
+                }
+
+                _estado.value = _estado.value.copy(
+                    categorias = categorias,
+                    cargando = false,
+                    error = null
+                )
+            }
+    }
+
+    fun crearCategoria(
+        nombre: String,
+        emoji: String,
+        tipo: TipoCategoria,
+        onSuccess: (String) -> Unit = {}
+    ) {
+        val userId = usuarioId ?: return
+
+        viewModelScope.launch {
             try {
-                categoriaRepository.obtenerCategorias(usuarioId)
-                    .catch { e ->
-                        _error.value = "Error al cargar categorías: ${e.message}"
-                    }
-                    .collect { categorias ->
-                        _categorias.value = categorias
-                        _isLoading.value = false
-                    }
+                println("🔵 [CategoriaVM] Creando categoría: $nombre ($emoji) - $tipo")
+
+                val categoriaData = hashMapOf(
+                    "nombre" to nombre,
+                    "emoji" to emoji,
+                    "tipo" to tipo.name,
+                    "presupuestado" to 0.0,
+                    "fecha_creacion" to System.currentTimeMillis(),
+                    "usuario_id" to userId
+                )
+
+                val docRef = firestore
+                    .collection("usuarios")
+                    .document(userId)
+                    .collection("categorias")
+                    .add(categoriaData)
+                    .await()
+
+                println("✅ [CategoriaVM] Categoría creada: ${docRef.id}")
+                onSuccess(docRef.id)
+
             } catch (e: Exception) {
-                _error.value = "Error inesperado: ${e.message}"
-                _isLoading.value = false
+                println("❌ [CategoriaVM] Error creando: ${e.message}")
+                _estado.value = _estado.value.copy(
+                    error = "Error al crear categoría: ${e.message}"
+                )
             }
         }
     }
 
-    /**
-     * Crear nueva categoría
-     */
-    fun crearCategoria(
-        nombre: String,
-        emoji: String,
-        color: String,
-        tipo: TipoCategoria,
-        presupuestado: Double = 0.0
-    ) {
-        viewModelScope.launch {
-            _isLoading.value = true
-
-            val nuevaCategoria = Categoria(
-                usuarioId = usuarioId,
-                nombre = nombre,
-                emoji = emoji,
-                color = color,
-                tipo = tipo,
-                presupuestado = presupuestado
-            )
-
-            categoriaRepository.crearCategoria(nuevaCategoria)
-                .onSuccess {
-                    _error.value = null
-                }
-                .onFailure { e ->
-                    _error.value = "Error al crear categoría: ${e.message}"
-                }
-
-            _isLoading.value = false
-        }
+    fun obtenerCategoriasPorTipo(tipo: TipoCategoria): List<Categoria> {
+        return _estado.value.categorias.filter { it.tipo == tipo }
     }
 
-    /**
-     * Actualizar categoría existente
-     */
-    fun actualizarCategoria(categoria: Categoria) {
-        viewModelScope.launch {
-            _isLoading.value = true
-
-            categoriaRepository.actualizarCategoria(categoria)
-                .onSuccess {
-                    _error.value = null
-                }
-                .onFailure { e ->
-                    _error.value = "Error al actualizar categoría: ${e.message}"
-                }
-
-            _isLoading.value = false
-        }
-    }
-
-    /**
-     * Eliminar categoría
-     */
-    fun eliminarCategoria(categoria: Categoria) {
-        viewModelScope.launch {
-            _isLoading.value = true
-
-            categoriaRepository.desactivarCategoria(categoria.id)
-                .onSuccess {
-                    _error.value = null
-                }
-                .onFailure { e ->
-                    _error.value = "Error al eliminar categoría: ${e.message}"
-                }
-
-            _isLoading.value = false
-        }
-    }
-
-    /**
-     * Filtrar por tipo
-     */
-    fun filtrarPorTipo(tipo: TipoCategoria?) {
-        _tipoFiltro.value = tipo
-    }
-
-    /**
-     * Limpiar error
-     */
-    fun limpiarError() {
-        _error.value = null
-    }
-
-    /**
-     * Crear categorías predeterminadas
-     */
-    fun crearCategoriasDefault() {
-        viewModelScope.launch {
-            _isLoading.value = true
-
-            categoriaRepository.crearCategoriasDefault(usuarioId)
-                .onSuccess {
-                    _error.value = null
-                }
-                .onFailure { e ->
-                    _error.value = "Error al crear categorías: ${e.message}"
-                }
-
-            _isLoading.value = false
-        }
+    override fun onCleared() {
+        super.onCleared()
+        categoriasListener?.remove()
     }
 }

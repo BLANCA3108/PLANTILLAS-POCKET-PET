@@ -5,6 +5,7 @@ import com.lvmh.pocketpet.datos.local.dao.PresupuestoDao
 import com.lvmh.pocketpet.datos.mapeadores.*
 import com.lvmh.pocketpet.dominio.modelos.Presupuesto
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
@@ -58,5 +59,17 @@ class PresupuestoRepository @Inject constructor(  // ⬅️ AGREGAR @Inject cons
         val presupuesto = obtenerPorId(presupuestoId) ?: return
         val actualizado = presupuesto.copy(gastado = nuevoGastado)
         actualizar(actualizado)
+    }
+    // En PresupuestoRepository.kt
+    suspend fun obtenerPresupuestoActivoPorCategoria(
+        usuarioId: String,
+        categoriaId: String
+    ): com.lvmh.pocketpet.dominio.modelos.Presupuesto? {
+        val presupuestos = obtenerPorUsuario(usuarioId)
+            .firstOrNull() ?: emptyList()
+
+        return presupuestos.find {
+            it.categoriaId == categoriaId && it.activo
+        }
     }
 }

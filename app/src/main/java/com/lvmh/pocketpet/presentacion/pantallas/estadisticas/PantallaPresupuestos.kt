@@ -1,348 +1,231 @@
-package com.lvmh.pocketpet.pantallas
+package com.lvmh.pocketpet.presentacion.pantallas
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.lvmh.pocketpet.dominio.modelos.Presupuesto
 import com.lvmh.pocketpet.presentacion.viewmodels.PresupuestoViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaPresupuestos(
-    onBackClick: () -> Unit = {},
-    viewModel: PresupuestoViewModel = hiltViewModel()
+    viewModel: PresupuestoViewModel,
+    onBackClick: () -> Unit,
+    alNavegar: (String) -> Unit
 ) {
     val estado by viewModel.estado.collectAsState()
-    var showDialog by remember { mutableStateOf(false) }
-    var showEliminarDialog by remember { mutableStateOf(false) }
-    var presupuestoAEliminar by remember { mutableStateOf<Presupuesto?>(null) }
+    var mostrarDialogoNuevo by remember { mutableStateOf(false) }
 
-    // ✅ CORREGIDO: Ya no necesita usuarioId como parámetro
-    LaunchedEffect(Unit) {
+    DisposableEffect(Unit) {
+        println("🔵 Componiendo PantallaPresupuestos")
         viewModel.inicializarUsuario()
-    }
 
-    val totalPresupuesto = estado.presupuestos.sumOf { it.monto }
-    val totalGastado = estado.presupuestos.sumOf { it.gastado }
+        onDispose {
+            println("🔵 Saliendo de PantallaPresupuestos")
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(
-                            onClick = { onBackClick() },
-                            modifier = Modifier
-                                .size(48.dp)
-                                .background(Color.White, CircleShape)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Atrás",
-                                tint = Color.Black
-                            )
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        Text("Presupuestos", color = Color.White)
+                title = { Text("Mis Presupuestos") },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Regresar",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF5B6BC4)
-                )
+                actions = {
+                    IconButton(onClick = { mostrarDialogoNuevo = true }) {
+                        Icon(Icons.Default.Add, contentDescription = "Nuevo presupuesto")
+                    }
+                }
             )
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showDialog = true },
-                containerColor = Color(0xFF5B6BC4)
+                onClick = { mostrarDialogoNuevo = true },
+                containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Nuevo presupuesto")
             }
         }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp)
-            ) {
-                // Cards de resumen
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    BudgetCard(
-                        title = "GASTADO",
-                        amount = "-S/${String.format("%.2f", totalGastado)}",
-                        subtitle = "Total gastado",
-                        backgroundColor = Color(0xFFE57373),
-                        modifier = Modifier.weight(1f)
-                    )
-                    BudgetCard(
-                        title = "PRESUPUESTO",
-                        amount = "S/${String.format("%.2f", totalPresupuesto)}",
-                        subtitle = "Total disponible",
-                        backgroundColor = Color(0xFF4CAF87),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Barra de progreso general
-                Text(
-                    text = "Presupuesto General",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "S/${String.format("%.2f", totalGastado)} de S/${String.format("%.2f", totalPresupuesto)}",
-                    fontSize = 16.sp,
-                    color = Color.Gray
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                LinearProgressIndicator(
-                    progress = if (totalPresupuesto > 0)
-                        (totalGastado / totalPresupuesto).toFloat().coerceIn(0f, 1f)
-                    else 0f,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(12.dp),
-                    color = if (totalPresupuesto > 0 && totalGastado / totalPresupuesto > 0.8)
-                        Color(0xFFE57373)
-                    else Color(0xFF4CAF87),
-                    trackColor = Color.LightGray
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Lista de presupuestos
-                if (estado.presupuestos.isEmpty()) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFF5F5F5)
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "No hay presupuestos",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Gray
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Toca el botón + para crear uno",
-                                fontSize = 14.sp,
-                                color = Color.Gray
-                            )
-                        }
-                    }
-                } else {
-                    Text(
-                        text = "Mis Presupuestos",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    estado.presupuestos.forEach { presupuesto ->
-                        PresupuestoItem(
-                            presupuesto = presupuesto,
-                            onDelete = {
-                                presupuestoAEliminar = presupuesto
-                                showEliminarDialog = true
-                            }
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
-                }
-            }
-
-            // Indicador de carga
-            if (estado.cargando) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-        }
-    }
-
-    // Diálogo para crear presupuesto
-    if (showDialog) {
-        NuevoPresupuestoDialog(
-            onDismiss = { showDialog = false },
-            onConfirm = { categoriaId, monto, periodo, alertaEn ->
-                viewModel.crearPresupuesto(categoriaId, monto, periodo, alertaEn)
-                showDialog = false
-            }
-        )
-    }
-
-    // Diálogo de confirmación para eliminar
-    if (showEliminarDialog && presupuestoAEliminar != null) {
-        AlertDialog(
-            onDismissRequest = { showEliminarDialog = false },
-            title = { Text("Eliminar Presupuesto") },
-            text = { Text("¿Estás seguro de que deseas eliminar este presupuesto?") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        presupuestoAEliminar?.let { viewModel.eliminarPresupuesto(it) }
-                        showEliminarDialog = false
-                        presupuestoAEliminar = null
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFE57373)
-                    )
-                ) {
-                    Text("Eliminar")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    showEliminarDialog = false
-                    presupuestoAEliminar = null
-                }) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
-
-    // Mostrar error si existe
-    estado.error?.let { error ->
-        LaunchedEffect(error) {
-            // Aquí podrías mostrar un Snackbar o Toast
-        }
-    }
-}
-
-@Composable
-fun BudgetCard(
-    title: String,
-    amount: String,
-    subtitle: String,
-    backgroundColor: Color,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.height(100.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor)
-    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+                .padding(padding)
         ) {
-            Text(
-                text = title,
-                color = Color.White,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = amount,
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = subtitle,
-                color = Color.White.copy(alpha = 0.8f),
-                fontSize = 10.sp
-            )
+            estado.error?.let { error ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Default.Error, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                        Text(error, color = MaterialTheme.colorScheme.onErrorContainer)
+                    }
+                }
+            }
+
+            estado.mensajeExito?.let { mensaje ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
+                        Text(mensaje, color = MaterialTheme.colorScheme.onTertiaryContainer)
+                    }
+                }
+            }
+
+            when {
+                estado.cargando && estado.presupuestos.isEmpty() -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            CircularProgressIndicator()
+                            Text("Cargando presupuestos...", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+                estado.presupuestos.isEmpty() -> {
+                    EstadoVacioPresupuestos()
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(estado.presupuestos, key = { it.presupuesto.id }) { item ->
+                            TarjetaPresupuesto(
+                                presupuesto = item.presupuesto,
+                                categoriaNombre = item.categoriaNombre,
+                                categoriaEmoji = item.categoriaEmoji,
+                                alEliminar = { viewModel.eliminarPresupuesto(item.presupuesto.id) }
+                            )
+                        }
+                    }
+                }
+            }
         }
+    }
+
+    if (mostrarDialogoNuevo) {
+        DialogoNuevoPresupuesto(
+            viewModel = viewModel,
+            alDismiss = {
+                mostrarDialogoNuevo = false
+                viewModel.limpiarMensajes()
+            }
+        )
     }
 }
 
 @Composable
-fun PresupuestoItem(
-    presupuesto: Presupuesto,
-    onDelete: () -> Unit
+fun TarjetaPresupuesto(
+    presupuesto: com.lvmh.pocketpet.dominio.modelos.Presupuesto,
+    categoriaNombre: String,
+    categoriaEmoji: String,
+    alEliminar: () -> Unit
 ) {
-    val porcentaje = if (presupuesto.monto > 0) {
-        ((presupuesto.gastado / presupuesto.monto) * 100).toInt().coerceIn(0, 100)
-    } else 0
+    val progreso = remember(presupuesto.porcentajeGastado) {
+        (presupuesto.porcentajeGastado.toFloat() / 100f).coerceIn(0f, 1f)
+    }
 
-    val color = when {
-        porcentaje >= 90 -> Color(0xFFE57373)
-        porcentaje >= 70 -> Color(0xFFFFB74D)
-        else -> Color(0xFF4CAF87)
+    val colorProgreso = when {
+        presupuesto.porcentajeGastado >= 100 -> Color.Red
+        presupuesto.porcentajeGastado >= presupuesto.alertaEn -> Color(0xFFFFA000)
+        else -> MaterialTheme.colorScheme.primary
     }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = presupuesto.categoriaId,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                IconButton(onClick = onDelete) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = categoriaEmoji,
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                    Column {
+                        Text(
+                            text = categoriaNombre,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "${presupuesto.periodo.uppercase()} • Alerta al ${presupuesto.alertaEn}%",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                IconButton(
+                    onClick = alEliminar,
+                    modifier = Modifier.size(36.dp)
+                ) {
                     Icon(
-                        imageVector = Icons.Default.Delete,
+                        Icons.Default.Delete,
                         contentDescription = "Eliminar",
-                        tint = Color(0xFFE57373)
+                        tint = MaterialTheme.colorScheme.error
                     )
                 }
             }
 
-            Text(
-                text = "Período: ${presupuesto.periodo}",
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             LinearProgressIndicator(
-                progress = (porcentaje / 100f).coerceIn(0f, 1f),
+                progress = { progreso },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(12.dp),
-                color = color,
-                trackColor = Color.LightGray
+                    .height(10.dp),
+                color = colorProgreso,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -353,144 +236,370 @@ fun PresupuestoItem(
             ) {
                 Column {
                     Text(
-                        text = "Gastado",
-                        fontSize = 12.sp,
-                        color = Color.Gray
+                        "Gastado",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "S/${String.format("%.2f", presupuesto.gastado)}",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        "S/. ${String.format("%.2f", presupuesto.gastado)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = if (presupuesto.excedido) Color.Red else MaterialTheme.colorScheme.onSurface
                     )
                 }
-                Column(horizontalAlignment = Alignment.End) {
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Presupuesto",
-                        fontSize = 12.sp,
-                        color = Color.Gray
+                        "Progreso",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "S/${String.format("%.2f", presupuesto.monto)}",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        "${String.format("%.0f", presupuesto.porcentajeGastado)}%",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = colorProgreso
+                    )
+                }
+
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        "Total",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "S/. ${String.format("%.2f", presupuesto.monto)}",
+                        style = MaterialTheme.typography.titleMedium
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "$porcentaje% usado",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = color
-                )
-                Text(
-                    text = "Quedan: S/${String.format("%.2f", presupuesto.monto - presupuesto.gastado)}",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-            }
+            Text(
+                text = "Disponible: S/. ${String.format("%.2f", presupuesto.disponible)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = when {
+                    presupuesto.excedido -> Color.Red
+                    presupuesto.disponible < (presupuesto.monto * 0.2) -> Color(0xFFFFA000)
+                    else -> MaterialTheme.colorScheme.primary
+                }
+            )
         }
     }
 }
 
 @Composable
-fun NuevoPresupuestoDialog(
-    onDismiss: () -> Unit,
-    onConfirm: (String, Double, String, Int) -> Unit
+fun DialogoNuevoPresupuesto(
+    viewModel: PresupuestoViewModel,
+    alDismiss: () -> Unit
 ) {
-    var categoria by remember { mutableStateOf("") }
+    val estado by viewModel.estado.collectAsState()
+    var categoriaSeleccionada by remember { mutableStateOf<String?>(null) }
     var monto by remember { mutableStateOf("") }
-    var periodo by remember { mutableStateOf("Mensual") }
-    var alertaEn by remember { mutableStateOf("80") }
-    var expandedPeriodo by remember { mutableStateOf(false) }
+    var periodoSeleccionado by remember { mutableStateOf("mensual") }
+    var alertaEn by remember { mutableStateOf(80) }
+    var mostrarSelectorCategoria by remember { mutableStateOf(false) }
+    var mostrarDialogoNuevaCategoria by remember { mutableStateOf(false) }
 
-    val periodos = listOf("Semanal", "Mensual", "Trimestral", "Anual")
+    val categoriasDisponibles = viewModel.obtenerCategoriasParaPresupuesto()
+    val categoria = categoriaSeleccionada?.let { id ->
+        categoriasDisponibles.find { it.id == id }
+    }
+
+    LaunchedEffect(categoriasDisponibles.size) {
+        println("🔵 Categorías disponibles: ${categoriasDisponibles.size}")
+        categoriasDisponibles.forEach {
+            println("   - ${it.emoji} ${it.nombre}")
+        }
+    }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = alDismiss,
+        icon = { Icon(Icons.Default.AccountBalance, contentDescription = null) },
         title = { Text("Nuevo Presupuesto") },
         text = {
-            Column {
-                OutlinedTextField(
-                    value = categoria,
-                    onValueChange = { categoria = it },
-                    label = { Text("Categoría") },
-                    placeholder = { Text("Ej: Comida, Transporte") },
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                OutlinedCard(
+                    onClick = { mostrarSelectorCategoria = true },
                     modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = categoria?.emoji ?: "📊",
+                                style = MaterialTheme.typography.headlineSmall
+                            )
+                            Column {
+                                Text(
+                                    "Categoría",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = categoria?.nombre ?: "Seleccionar categoría",
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
+                        }
+                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
+                    }
+                }
 
                 OutlinedTextField(
                     value = monto,
-                    onValueChange = { if (it.isEmpty() || it.toDoubleOrNull() != null) monto = it },
-                    label = { Text("Monto (S/)") },
-                    placeholder = { Text("0.00") },
-                    modifier = Modifier.fillMaxWidth()
+                    onValueChange = { monto = it },
+                    label = { Text("Monto del presupuesto") },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Ej: 500.00") },
+                    leadingIcon = { Text("S/.", style = MaterialTheme.typography.bodyMedium) },
+                    singleLine = true
                 )
-                Spacer(modifier = Modifier.height(8.dp))
 
-                ExposedDropdownMenuBox(
-                    expanded = expandedPeriodo,
-                    onExpandedChange = { expandedPeriodo = !expandedPeriodo }
+                Text("Período", style = MaterialTheme.typography.labelMedium)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedTextField(
-                        value = periodo,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Período") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedPeriodo) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expandedPeriodo,
-                        onDismissRequest = { expandedPeriodo = false }
-                    ) {
-                        periodos.forEach { p ->
-                            DropdownMenuItem(
-                                text = { Text(p) },
-                                onClick = {
-                                    periodo = p
-                                    expandedPeriodo = false
-                                }
-                            )
-                        }
+                    listOf("semanal", "mensual", "trimestral", "anual").forEach { periodo ->
+                        FilterChip(
+                            selected = periodoSeleccionado == periodo,
+                            onClick = { periodoSeleccionado = periodo },
+                            label = { Text(periodo.replaceFirstChar { it.uppercase() }) },
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
 
-                OutlinedTextField(
-                    value = alertaEn,
-                    onValueChange = {
-                        if (it.isEmpty() || (it.toIntOrNull()?.let { v -> v in 0..100 } == true)) {
-                            alertaEn = it
-                        }
-                    },
-                    label = { Text("Alerta en (%)") },
-                    placeholder = { Text("80") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column {
+                    Text("Recibir alerta al $alertaEn%", style = MaterialTheme.typography.labelMedium)
+                    Slider(
+                        value = alertaEn.toFloat(),
+                        onValueChange = { alertaEn = it.toInt() },
+                        valueRange = 50f..100f,
+                        steps = 9
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("50%", style = MaterialTheme.typography.bodySmall)
+                        Text("100%", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    val montoDouble = monto.toDoubleOrNull() ?: 0.0
-                    val alertaInt = alertaEn.toIntOrNull() ?: 80
-                    if (categoria.isNotEmpty() && montoDouble > 0) {
-                        onConfirm(categoria, montoDouble, periodo, alertaInt)
+                    val montoDouble = monto.toDoubleOrNull()
+                    if (montoDouble != null && montoDouble > 0 && categoria != null) {
+                        viewModel.crearPresupuesto(
+                            categoriaId = categoria.id,
+                            monto = montoDouble,
+                            periodo = periodoSeleccionado,
+                            alertaEn = alertaEn
+                        )
+                        alDismiss()
                     }
                 },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF5B6BC4)
+                enabled = monto.toDoubleOrNull() != null &&
+                        monto.toDoubleOrNull()!! > 0 &&
+                        categoria != null
+            ) {
+                Text("Crear")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = alDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+
+    if (mostrarSelectorCategoria) {
+        AlertDialog(
+            onDismissRequest = { mostrarSelectorCategoria = false },
+            title = { Text("Seleccionar Categoría") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (categoriasDisponibles.isEmpty()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                Icons.Default.Category,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("No hay categorías de gastos", style = MaterialTheme.typography.bodyMedium)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                "Crea una categoría de gasto primero",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(onClick = {
+                                mostrarSelectorCategoria = false
+                                mostrarDialogoNuevaCategoria = true
+                            }) {
+                                Icon(Icons.Default.Add, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Crear categoría")
+                            }
+                        }
+                    } else {
+                        categoriasDisponibles.forEach { cat ->
+                            Card(
+                                onClick = {
+                                    categoriaSeleccionada = cat.id
+                                    mostrarSelectorCategoria = false
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (categoriaSeleccionada == cat.id) {
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.surfaceVariant
+                                    }
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(cat.emoji, style = MaterialTheme.typography.headlineMedium)
+                                    Text(cat.nombre, style = MaterialTheme.typography.titleMedium)
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        OutlinedButton(
+                            onClick = {
+                                mostrarSelectorCategoria = false
+                                mostrarDialogoNuevaCategoria = true
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Nueva categoría")
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { mostrarSelectorCategoria = false }) {
+                    Text("Cerrar")
+                }
+            }
+        )
+    }
+
+    if (mostrarDialogoNuevaCategoria) {
+        DialogoNuevaCategoria(
+            onDismiss = { mostrarDialogoNuevaCategoria = false },
+            onCreate = { nombre, emoji ->
+                viewModel.crearCategoria(
+                    nombre = nombre,
+                    emoji = emoji,
+                    tipo = "GASTO"
+                ) { nuevaCategoriaId ->
+                    categoriaSeleccionada = nuevaCategoriaId
+                    mostrarDialogoNuevaCategoria = false
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun DialogoNuevaCategoria(
+    onDismiss: () -> Unit,
+    onCreate: (nombre: String, emoji: String) -> Unit
+) {
+    var nombre by remember { mutableStateOf("") }
+    var emojiSeleccionado by remember { mutableStateOf("📊") }
+
+    val emojisDisponibles = listOf(
+        "🛒", "🏠", "🚗", "🍔", "🎮", "💰", "📈", "🎁",
+        "✈️", "🏥", "📚", "👕", "⚡", "💊", "🎵", "📱",
+        "🎬", "🏋️", "🎓", "🔧", "☕", "🌮", "🎨", "💼"
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Default.Category, contentDescription = null) },
+        title = { Text("Nueva Categoría de Gasto") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                OutlinedTextField(
+                    value = nombre,
+                    onValueChange = { nombre = it },
+                    label = { Text("Nombre de la categoría") },
+                    placeholder = { Text("Ej: Supermercado, Transporte, etc.") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
                 )
+
+                Text("Selecciona un emoji:", style = MaterialTheme.typography.labelMedium)
+
+                LazyColumn(
+                    modifier = Modifier.height(200.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items((emojisDisponibles.size + 3) / 4) { rowIndex ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            for (colIndex in 0 until 4) {
+                                val index = rowIndex * 4 + colIndex
+                                if (index < emojisDisponibles.size) {
+                                    val emoji = emojisDisponibles[index]
+                                    FilterChip(
+                                        selected = emojiSeleccionado == emoji,
+                                        onClick = { emojiSeleccionado = emoji },
+                                        label = { Text(emoji, style = MaterialTheme.typography.headlineMedium) },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                } else {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (nombre.isNotBlank()) {
+                        onCreate(nombre, emojiSeleccionado)
+                    }
+                },
+                enabled = nombre.isNotBlank()
             ) {
                 Text("Crear")
             }
@@ -501,4 +610,35 @@ fun NuevoPresupuestoDialog(
             }
         }
     )
+}
+
+@Composable
+fun EstadoVacioPresupuestos() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            Icons.Default.AccountBalance,
+            contentDescription = null,
+            modifier = Modifier.size(80.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            "No hay presupuestos",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            "Crea tu primer presupuesto para controlar tus gastos",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            textAlign = TextAlign.Center
+        )
+    }
 }

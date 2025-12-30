@@ -11,8 +11,7 @@ data class Categoria(
     val gastado: Double = 0.0,
     val activa: Boolean = true,
     val fechaCreacion: Long = System.currentTimeMillis()
-)
-{
+) {
     val progreso: Float
         get() = if (presupuestado > 0) (gastado / presupuestado * 100).toFloat() else 0f
 
@@ -23,4 +22,20 @@ data class Categoria(
 enum class TipoCategoria {
     GASTO,
     INGRESO
+}
+
+// Función de extensión para convertir TipoCategoria a TipoTransaccion
+fun TipoCategoria.toTipoTransaccion(): TipoTransaccion {
+    return when (this) {
+        TipoCategoria.GASTO -> TipoTransaccion.GASTO
+        TipoCategoria.INGRESO -> TipoTransaccion.INGRESO
+    }
+}
+
+// Función de extensión para convertir TipoTransaccion a TipoCategoria
+fun TipoTransaccion.toTipoCategoria(): TipoCategoria {
+    return when (this) {
+        TipoTransaccion.GASTO -> TipoCategoria.GASTO
+        TipoTransaccion.INGRESO -> TipoCategoria.INGRESO
+    }
 }
