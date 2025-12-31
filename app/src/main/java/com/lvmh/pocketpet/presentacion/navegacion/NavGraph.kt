@@ -8,7 +8,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.lvmh.pocketpet.pantallas.Categorias
 import com.lvmh.pocketpet.pantallas.Configuracion
 import com.lvmh.pocketpet.pantallas.Logo
 import com.lvmh.pocketpet.pantallas.MiPerfil
@@ -19,7 +18,7 @@ import com.lvmh.pocketpet.pantallas.mascota.NavegacionMascota
 import com.lvmh.pocketpet.presentacion.auth.LoginScreen
 import com.lvmh.pocketpet.presentacion.auth.RegistroScreen
 import com.lvmh.pocketpet.presentacion.pantallas.PantallaPrincipal
-import com.lvmh.pocketpet.presentacion.pantallas.PantallaPresupuestos  // ← CORREGIDO AQUÍ
+import com.lvmh.pocketpet.presentacion.pantallas.PantallaPresupuestos
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaCalendario
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaComparativos
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaEstadisticas
@@ -28,6 +27,7 @@ import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaMetas
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaReportes
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaTendencias
 import com.lvmh.pocketpet.presentacion.viewmodels.AuthViewModel
+import com.lvmh.pocketpet.presentacion.viewmodels.CategoriaViewModel
 import com.lvmh.pocketpet.presentacion.viewmodels.EstadisticasViewModel
 import com.lvmh.pocketpet.presentacion.viewmodels.PresupuestoViewModel
 import com.lvmh.pocketpet.viewmodels.TransaccionViewModel
@@ -116,9 +116,12 @@ fun PocketPetNavGraph() {
 
         composable(Routes.PRINCIPAL) {
             if (isAuthenticated) {
-                val viewModel: TransaccionViewModel = hiltViewModel()
+                val transaccionViewModel: TransaccionViewModel = hiltViewModel()
+                val categoriaViewModel: CategoriaViewModel = hiltViewModel()
+
                 PantallaPrincipal(
-                    viewModel = viewModel,
+                    viewModel = transaccionViewModel,
+                    categoriaViewModel = categoriaViewModel,
                     alNavegar = { ruta ->
                         navController.navigate(ruta)
                     }
@@ -203,7 +206,6 @@ fun PocketPetNavGraph() {
             val viewModel: EstadisticasViewModel = hiltViewModel()
             PantallaCalendario(
                 viewModel = viewModel,
-                usuarioId = "usuario_demo_001",
                 alRegresar = {
                     navController.popBackStack()
                 }
@@ -214,15 +216,17 @@ fun PocketPetNavGraph() {
         // 💰 PRESUPUESTOS Y METAS
         // ===============================
 
-        // En NavGraph.kt
         composable(Routes.PRESUPUESTOS) {
-            val viewModel: PresupuestoViewModel = hiltViewModel()
+            val presupuestoViewModel: PresupuestoViewModel = hiltViewModel()
+            val categoriaViewModel: CategoriaViewModel = hiltViewModel()
+
             PantallaPresupuestos(
-                viewModel = viewModel,
-                onBackClick = { navController.popBackStack() },  // ← Agregar esto
-                alNavegar = { destino ->
-                    navController.navigate(destino)
+                viewModel = presupuestoViewModel,
+                categoriaViewModel = categoriaViewModel,
+                onBackClick = {
+                    navController.popBackStack()
                 }
+                // 🔥 ELIMINADO: alNavegar - ya no se necesita porque no navega a categorías
             )
         }
 
@@ -247,13 +251,7 @@ fun PocketPetNavGraph() {
             )
         }
 
-        composable(Routes.CATEGORIAS) {
-            Categorias(
-                onBack = {
-                    navController.popBackStack()
-                }
-            )
-        }
+        // 🔥 ELIMINADO: Routes.CATEGORIAS - Ya no se usa pantalla de categorías
 
         // ===============================
         // 🐾 MASCOTA
@@ -270,26 +268,3 @@ fun PocketPetNavGraph() {
         }
     }
 }
-
-// 👇 COMENTAMOS ESTAS HASTA QUE LAS CREES
-/*
-composable(Routes.SELECCIONAR_MASCOTA) {
-    PantallaSeleccionMascota(
-        onMascotaSeleccionada = { mascotaTipo ->
-            navController.navigate(Routes.TUTORIAL_MASCOTA) {
-                popUpTo(Routes.SELECCIONAR_MASCOTA) { inclusive = true }
-            }
-        }
-    )
-}
-
-composable(Routes.TUTORIAL_MASCOTA) {
-    PantallaTutorialMascota(
-        onFinalizarTutorial = {
-            navController.navigate(Routes.MASCOTA) {
-                popUpTo(Routes.TUTORIAL_MASCOTA) { inclusive = true }
-            }
-        }
-    )
-}
-*/

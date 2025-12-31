@@ -14,20 +14,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.lvmh.pocketpet.presentacion.viewmodels.PresupuestoViewModel
+import com.lvmh.pocketpet.presentacion.viewmodels.CategoriaViewModel
+import com.lvmh.pocketpet.dominio.modelos.Categoria
+import com.lvmh.pocketpet.dominio.modelos.TipoCategoria
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaPresupuestos(
     viewModel: PresupuestoViewModel,
-    onBackClick: () -> Unit,
-    alNavegar: (String) -> Unit
+    categoriaViewModel: CategoriaViewModel,
+    onBackClick: () -> Unit
 ) {
     val estado by viewModel.estado.collectAsState()
+    val estadoCategorias by categoriaViewModel.estado.collectAsState()
     var mostrarDialogoNuevo by remember { mutableStateOf(false) }
 
     DisposableEffect(Unit) {
         println("🔵 Componiendo PantallaPresupuestos")
         viewModel.inicializarUsuario()
+        categoriaViewModel.inicializar()
 
         onDispose {
             println("🔵 Saliendo de PantallaPresupuestos")
@@ -145,6 +150,8 @@ fun PantallaPresupuestos(
     if (mostrarDialogoNuevo) {
         DialogoNuevoPresupuesto(
             viewModel = viewModel,
+            categoriaViewModel = categoriaViewModel,
+            categorias = estadoCategorias.categorias,
             alDismiss = {
                 mostrarDialogoNuevo = false
                 viewModel.limpiarMensajes()
@@ -292,9 +299,10 @@ fun TarjetaPresupuesto(
 @Composable
 fun DialogoNuevoPresupuesto(
     viewModel: PresupuestoViewModel,
+    categoriaViewModel: CategoriaViewModel,
+    categorias: List<Categoria>,
     alDismiss: () -> Unit
 ) {
-    val estado by viewModel.estado.collectAsState()
     var categoriaSeleccionada by remember { mutableStateOf<String?>(null) }
     var monto by remember { mutableStateOf("") }
     var periodoSeleccionado by remember { mutableStateOf("mensual") }
@@ -302,16 +310,14 @@ fun DialogoNuevoPresupuesto(
     var mostrarSelectorCategoria by remember { mutableStateOf(false) }
     var mostrarDialogoNuevaCategoria by remember { mutableStateOf(false) }
 
-    val categoriasDisponibles = viewModel.obtenerCategoriasParaPresupuesto()
-    val categoria = categoriaSeleccionada?.let { id ->
-        categoriasDisponibles.find { it.id == id }
+    val estado by viewModel.estado.collectAsState()
+    val categoriasConPresupuesto = estado.presupuestos.map { it.presupuesto.categoriaId }.toSet()
+    val categoriasDisponibles = categorias.filter {
+        it.tipo == TipoCategoria.GASTO && !categoriasConPresupuesto.contains(it.id)
     }
 
-    LaunchedEffect(categoriasDisponibles.size) {
-        println("🔵 Categorías disponibles: ${categoriasDisponibles.size}")
-        categoriasDisponibles.forEach {
-            println("   - ${it.emoji} ${it.nombre}")
-        }
+    val categoria = categoriaSeleccionada?.let { id ->
+        categoriasDisponibles.find { it.id == id }
     }
 
     AlertDialog(
@@ -446,12 +452,13 @@ fun DialogoNuevoPresupuesto(
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("No hay categorías de gastos", style = MaterialTheme.typography.bodyMedium)
+                            Text("No hay categorías de gasto disponibles", style = MaterialTheme.typography.bodyMedium)
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                "Crea una categoría de gasto primero",
+                                "Todas tus categorías ya tienen presupuesto o necesitas crear una nueva",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(onClick = {
@@ -516,96 +523,103 @@ fun DialogoNuevoPresupuesto(
         )
     }
 
+    // 🔥 DIÁLOGO PARA CREAR NUEVA CATEGORÍA DESDE AQUÍ
     if (mostrarDialogoNuevaCategoria) {
-        DialogoNuevaCategoria(
-            onDismiss = { mostrarDialogoNuevaCategoria = false },
-            onCreate = { nombre, emoji ->
-                viewModel.crearCategoria(
-                    nombre = nombre,
-                    emoji = emoji,
-                    tipo = "GASTO"
-                ) { nuevaCategoriaId ->
-                    categoriaSeleccionada = nuevaCategoriaId
-                    mostrarDialogoNuevaCategoria = false
-                }
+        DialogoCrearCategoria(
+            tipo = TipoCategoria.GASTO,
+            categoriaViewModel = categoriaViewModel,
+            alDismiss = { mostrarDialogoNuevaCategoria = false },
+            alCreada = { nuevaCategoriaId ->
+                categoriaSeleccionada = nuevaCategoriaId
+                mostrarDialogoNuevaCategoria = false
             }
         )
     }
 }
 
+// 🔥 COMPONENTE REUTILIZABLE PARA CREAR CATEGORÍAS
 @Composable
-fun DialogoNuevaCategoria(
-    onDismiss: () -> Unit,
-    onCreate: (nombre: String, emoji: String) -> Unit
+fun DialogoCrearCategoria(
+    tipo: TipoCategoria,
+    categoriaViewModel: CategoriaViewModel,
+    alDismiss: () -> Unit,
+    alCreada: (String) -> Unit
 ) {
     var nombre by remember { mutableStateOf("") }
-    var emojiSeleccionado by remember { mutableStateOf("📊") }
-
-    val emojisDisponibles = listOf(
-        "🛒", "🏠", "🚗", "🍔", "🎮", "💰", "📈", "🎁",
-        "✈️", "🏥", "📚", "👕", "⚡", "💊", "🎵", "📱",
-        "🎬", "🏋️", "🎓", "🔧", "☕", "🌮", "🎨", "💼"
-    )
+    var emoji by remember { mutableStateOf("") }
+    var cargando by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = { Icon(Icons.Default.Category, contentDescription = null) },
-        title = { Text("Nueva Categoría de Gasto") },
+        onDismissRequest = alDismiss,
+        icon = { Icon(Icons.Default.Add, contentDescription = null) },
+        title = { Text("Nueva Categoría de ${if (tipo == TipoCategoria.GASTO) "Gasto" else "Ingreso"}") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                if (error != null) {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Text(
+                            error!!,
+                            modifier = Modifier.padding(12.dp),
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+
                 OutlinedTextField(
-                    value = nombre,
-                    onValueChange = { nombre = it },
-                    label = { Text("Nombre de la categoría") },
-                    placeholder = { Text("Ej: Supermercado, Transporte, etc.") },
+                    value = emoji,
+                    onValueChange = { if (it.length <= 2) emoji = it },
+                    label = { Text("Emoji") },
                     modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Ej: 🍔") },
                     singleLine = true
                 )
 
-                Text("Selecciona un emoji:", style = MaterialTheme.typography.labelMedium)
+                OutlinedTextField(
+                    value = nombre,
+                    onValueChange = { nombre = it },
+                    label = { Text("Nombre") },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Ej: Comida") },
+                    singleLine = true
+                )
 
-                LazyColumn(
-                    modifier = Modifier.height(200.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items((emojisDisponibles.size + 3) / 4) { rowIndex ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            for (colIndex in 0 until 4) {
-                                val index = rowIndex * 4 + colIndex
-                                if (index < emojisDisponibles.size) {
-                                    val emoji = emojisDisponibles[index]
-                                    FilterChip(
-                                        selected = emojiSeleccionado == emoji,
-                                        onClick = { emojiSeleccionado = emoji },
-                                        label = { Text(emoji, style = MaterialTheme.typography.headlineMedium) },
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                } else {
-                                    Spacer(modifier = Modifier.weight(1f))
-                                }
-                            }
-                        }
-                    }
+                if (cargando) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    if (nombre.isNotBlank()) {
-                        onCreate(nombre, emojiSeleccionado)
-                    }
+                    cargando = true
+                    error = null
+                    categoriaViewModel.crearCategoria(
+                        nombre = nombre.trim(),
+                        emoji = emoji.trim(),
+                        tipo = tipo,
+                        onSuccess = { id ->
+                            cargando = false
+                            alCreada(id)
+                        },
+                        onError = { errorMsg ->
+                            cargando = false
+                            error = errorMsg
+                        }
+                    )
                 },
-                enabled = nombre.isNotBlank()
+                enabled = nombre.isNotBlank() && emoji.isNotBlank() && !cargando
             ) {
                 Text("Crear")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = alDismiss, enabled = !cargando) {
                 Text("Cancelar")
             }
         }

@@ -82,7 +82,7 @@ class CategoriaViewModel @Inject constructor(
 
                 println("✅ [CategoriaVM] Categorías cargadas: ${categorias.size}")
                 categorias.forEach {
-                    println("   - ${it.emoji} ${it.nombre} (${it.tipo}) - Presup: S/.${it.presupuestado}")
+                    println("   - ${it.emoji} ${it.nombre} (${it.tipo})")
                 }
 
                 _estado.value = _estado.value.copy(
@@ -93,13 +93,18 @@ class CategoriaViewModel @Inject constructor(
             }
     }
 
+    // 🔥 FUNCIÓN PRINCIPAL: Crear categoría desde cualquier lugar
     fun crearCategoria(
         nombre: String,
         emoji: String,
         tipo: TipoCategoria,
-        onSuccess: (String) -> Unit = {}
+        onSuccess: (String) -> Unit = {},
+        onError: (String) -> Unit = {}
     ) {
-        val userId = usuarioId ?: return
+        val userId = usuarioId ?: run {
+            onError("Usuario no autenticado")
+            return
+        }
 
         viewModelScope.launch {
             try {
@@ -126,6 +131,7 @@ class CategoriaViewModel @Inject constructor(
 
             } catch (e: Exception) {
                 println("❌ [CategoriaVM] Error creando: ${e.message}")
+                onError("Error al crear categoría: ${e.message}")
                 _estado.value = _estado.value.copy(
                     error = "Error al crear categoría: ${e.message}"
                 )
@@ -135,6 +141,10 @@ class CategoriaViewModel @Inject constructor(
 
     fun obtenerCategoriasPorTipo(tipo: TipoCategoria): List<Categoria> {
         return _estado.value.categorias.filter { it.tipo == tipo }
+    }
+
+    fun limpiarError() {
+        _estado.value = _estado.value.copy(error = null)
     }
 
     override fun onCleared() {
