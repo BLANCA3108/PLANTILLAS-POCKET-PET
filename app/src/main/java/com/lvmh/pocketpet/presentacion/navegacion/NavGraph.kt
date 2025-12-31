@@ -21,10 +21,13 @@ fun PocketPetNavGraph() {
     val navController = rememberNavController()
     val context = LocalContext.current
 
-    // 🔐 Auth
+    // 🔐 AuthViewModel
     val authViewModel: AuthViewModel = hiltViewModel()
     val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
     val currentUser by authViewModel.currentUser.collectAsState()
+
+    // 🆔 Obtener userId de forma segura
+    val userId = currentUser?.uid ?: ""
 
     val startDestination = if (isAuthenticated) {
         Routes.PRINCIPAL
@@ -42,11 +45,17 @@ fun PocketPetNavGraph() {
         // ===============================
 
         composable(Routes.LOGIN) {
-            LoginScreen(navController, authViewModel)
+            LoginScreen(
+                navController = navController,
+                authViewModel = authViewModel
+            )
         }
 
         composable(Routes.REGISTRO) {
-            RegistroScreen(navController, authViewModel)
+            RegistroScreen(
+                navController = navController,
+                authViewModel = authViewModel
+            )
         }
 
         // ===============================
@@ -54,27 +63,31 @@ fun PocketPetNavGraph() {
         // ===============================
 
         composable(Routes.LOGO) {
-            Logo {
-                navController.navigate(Routes.SLIDE1) {
-                    popUpTo(Routes.LOGO) { inclusive = true }
+            Logo(
+                onNext = {
+                    navController.navigate(Routes.SLIDE1) {
+                        popUpTo(Routes.LOGO) { inclusive = true }
+                    }
                 }
-            }
+            )
         }
 
         composable(Routes.SLIDE1) {
-            Slide1 { navController.navigate(Routes.SLIDE2) }
+            Slide1(onNext = { navController.navigate(Routes.SLIDE2) })
         }
 
         composable(Routes.SLIDE2) {
-            Slide2 { navController.navigate(Routes.SLIDE3) }
+            Slide2(onNext = { navController.navigate(Routes.SLIDE3) })
         }
 
         composable(Routes.SLIDE3) {
-            Slide3 {
-                navController.navigate(Routes.LOGIN) {
-                    popUpTo(Routes.LOGO) { inclusive = true }
+            Slide3(
+                onNext = {
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.LOGO) { inclusive = true }
+                    }
                 }
-            }
+            )
         }
 
         // ===============================
@@ -98,7 +111,7 @@ fun PocketPetNavGraph() {
             PantallaPrincipal(
                 viewModel = transaccionVM,
                 categoriaViewModel = categoriaVM,
-                alNavegar = navController::navigate
+                alNavegar = { ruta -> navController.navigate(ruta) }
             )
         }
 
@@ -107,7 +120,7 @@ fun PocketPetNavGraph() {
         // ===============================
 
         composable(Routes.MI_PERFIL) {
-            MiPerfil { navController.popBackStack() }
+            MiPerfil(onBack = { navController.popBackStack() })
         }
 
         // ===============================
@@ -116,45 +129,51 @@ fun PocketPetNavGraph() {
 
         composable(Routes.ESTADISTICAS) {
             val vm: EstadisticasViewModel = hiltViewModel()
-            PantallaEstadisticas(vm, navController::navigate)
+            PantallaEstadisticas(
+                viewModel = vm,
+                alNavegar = { ruta -> navController.navigate(ruta) }
+            )
         }
 
         composable(Routes.ESTADISTICAS_CATEGORIAS) {
             val vm: EstadisticasViewModel = hiltViewModel()
-            PantallaEstadisticasCategorias(vm) {
-                navController.popBackStack()
-            }
+            PantallaEstadisticasCategorias(
+                viewModel = vm,
+                alRegresar = { navController.popBackStack() }
+            )
         }
 
         composable(Routes.COMPARATIVOS) {
             val vm: EstadisticasViewModel = hiltViewModel()
-            PantallaComparativos(vm) {
-                navController.popBackStack()
-            }
+            PantallaComparativos(
+                viewModel = vm,
+                alRegresar = { navController.popBackStack() }
+            )
         }
 
         composable(Routes.TENDENCIAS) {
             val vm: EstadisticasViewModel = hiltViewModel()
-            PantallaTendencias(vm) {
-                navController.popBackStack()
-            }
+            PantallaTendencias(
+                viewModel = vm,
+                alRegresar = { navController.popBackStack() }
+            )
         }
 
         composable(Routes.REPORTES) {
             val vm: EstadisticasViewModel = hiltViewModel()
-            PantallaReportes(vm) {
-                navController.popBackStack()
-            }
+            PantallaReportes(
+                viewModel = vm,
+                alRegresar = { navController.popBackStack() }
+            )
         }
 
         composable(Routes.CALENDARIO) {
             val vm: EstadisticasViewModel = hiltViewModel()
             PantallaCalendario(
                 viewModel = vm,
-                usuarioId = currentUser?.uid ?: "usuario_demo_001"
-            ) {
-                navController.popBackStack()
-            }
+                usuarioId = userId.ifEmpty { "usuario_demo_001" },
+                alRegresar = { navController.popBackStack() }
+            )
         }
 
         // ===============================
@@ -174,10 +193,9 @@ fun PocketPetNavGraph() {
 
         composable(Routes.METAS) {
             PantallaMetas(
-                usuarioId = currentUser?.uid ?: "usuario_demo_001"
-            ) {
-                navController.popBackStack()
-            }
+                usuarioId = userId.ifEmpty { "usuario_demo_001" },
+                alRegresar = { navController.popBackStack() }
+            )
         }
 
         // ===============================
@@ -185,11 +203,11 @@ fun PocketPetNavGraph() {
         // ===============================
 
         composable(Routes.CONFIGURACION) {
-            Configuracion { navController.popBackStack() }
+            Configuracion(onBack = { navController.popBackStack() })
         }
 
         composable(Routes.CATEGORIAS) {
-            Categorias { navController.popBackStack() }
+            Categorias(onBack = { navController.popBackStack() })
         }
 
         // ===============================
@@ -200,10 +218,10 @@ fun PocketPetNavGraph() {
 
             val database = AppDatabase.getInstance(context)
             val firestore = FirebaseFirestore.getInstance()
-            val usuarioId = currentUser?.uid ?: "usuario_temp"
+            val mascotaUserId = userId.ifEmpty { "usuario_temp" }
 
             NavegacionMascota(
-                usuarioId = usuarioId,
+                usuarioId = mascotaUserId,
                 database = database,
                 firestore = firestore,
                 onVolverPrincipal = {
