@@ -4,10 +4,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.firestore.FirebaseFirestore
+import com.lvmh.pocketpet.datos.local.AppDatabase
 import com.lvmh.pocketpet.pantallas.Categorias
 import com.lvmh.pocketpet.pantallas.Configuracion
 import com.lvmh.pocketpet.pantallas.Logo
@@ -19,7 +22,7 @@ import com.lvmh.pocketpet.pantallas.mascota.NavegacionMascota
 import com.lvmh.pocketpet.presentacion.auth.LoginScreen
 import com.lvmh.pocketpet.presentacion.auth.RegistroScreen
 import com.lvmh.pocketpet.presentacion.pantallas.PantallaPrincipal
-import com.lvmh.pocketpet.pantallas.PantallaPresupuestos
+// import com.lvmh.pocketpet.pantallas.PantallaPresupuestos  // ← Comentar si no existe
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaCalendario
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaComparativos
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaEstadisticas
@@ -31,14 +34,23 @@ import com.lvmh.pocketpet.presentacion.viewmodels.AuthViewModel
 import com.lvmh.pocketpet.presentacion.viewmodels.EstadisticasViewModel
 import com.lvmh.pocketpet.presentacion.viewmodels.PresupuestoViewModel
 import com.lvmh.pocketpet.viewmodels.TransaccionViewModel
-
+// Agregar imports necesarios si faltan
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 @Composable
 fun PocketPetNavGraph() {
     val navController = rememberNavController()
+    val context = LocalContext.current
 
     // ViewModel de autenticación
     val authViewModel: AuthViewModel = hiltViewModel()
     val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
+    val currentUser by authViewModel.currentUser.collectAsState()
 
     // Determinar la pantalla inicial basada en la autenticación
     val startDestination = if (isAuthenticated) {
@@ -201,9 +213,10 @@ fun PocketPetNavGraph() {
 
         composable(Routes.CALENDARIO) {
             val viewModel: EstadisticasViewModel = hiltViewModel()
+            val userId = currentUser?.uid ?: "usuario_demo_001"
             PantallaCalendario(
                 viewModel = viewModel,
-                usuarioId = "usuario_demo_001",
+                usuarioId = userId,
                 alRegresar = {
                     navController.popBackStack()
                 }
@@ -215,6 +228,36 @@ fun PocketPetNavGraph() {
         // ===============================
 
         composable(Routes.PRESUPUESTOS) {
+            // OPCIÓN 1: Si PantallaPresupuestos NO existe, usar pantalla temporal
+            androidx.compose.foundation.layout.Box(
+                modifier = androidx.compose.ui.Modifier.fillMaxSize(),
+                contentAlignment = androidx.compose.ui.Alignment.Center
+            ) {
+                androidx.compose.foundation.layout.Column(
+                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                ) {
+                    androidx.compose.material3.Text(
+                        "💰 Presupuestos",
+                        fontSize = 24.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                    )
+                    androidx.compose.foundation.layout.Spacer(
+                        modifier = androidx.compose.ui.Modifier.height(16.dp)
+                    )
+                    androidx.compose.material3.Text("Pantalla en desarrollo")
+                    androidx.compose.foundation.layout.Spacer(
+                        modifier = androidx.compose.ui.Modifier.height(24.dp)
+                    )
+                    androidx.compose.material3.Button(
+                        onClick = { navController.popBackStack() }
+                    ) {
+                        androidx.compose.material3.Text("Volver")
+                    }
+                }
+            }
+
+            // OPCIÓN 2: Si PantallaPresupuestos SÍ existe, descomenta esto:
+            /*
             val viewModel: PresupuestoViewModel = hiltViewModel()
             PantallaPresupuestos(
                 onBackClick = {
@@ -222,11 +265,13 @@ fun PocketPetNavGraph() {
                 },
                 viewModel = viewModel
             )
+            */
         }
 
         composable(Routes.METAS) {
+            val userId = currentUser?.uid ?: "usuario_demo_001"
             PantallaMetas(
-                usuarioId = "usuario_demo_001",
+                usuarioId = userId,
                 alRegresar = {
                     navController.popBackStack()
                 }
@@ -254,11 +299,18 @@ fun PocketPetNavGraph() {
         }
 
         // ===============================
-// 🐾 MASCOTA
-// ===============================
+        // 🐾 MASCOTA
+        // ===============================
 
         composable(Routes.MASCOTA) {
+            val userId = currentUser?.uid ?: "usuario_temp"
+            val database = AppDatabase.getInstance(context)
+            val firestore = FirebaseFirestore.getInstance()
+
             NavegacionMascota(
+                usuarioId = userId,
+                database = database,
+                firestore = firestore,
                 onVolverPrincipal = {
                     navController.navigate(Routes.PRINCIPAL) {
                         popUpTo(Routes.PRINCIPAL) { inclusive = false }
@@ -269,25 +321,3 @@ fun PocketPetNavGraph() {
     }
 }
 
-// 👇 COMENTAMOS ESTAS HASTA QUE LAS CREES
-/*
-composable(Routes.SELECCIONAR_MASCOTA) {
-    PantallaSeleccionMascota(
-        onMascotaSeleccionada = { mascotaTipo ->
-            navController.navigate(Routes.TUTORIAL_MASCOTA) {
-                popUpTo(Routes.SELECCIONAR_MASCOTA) { inclusive = true }
-            }
-        }
-    )
-}
-
-composable(Routes.TUTORIAL_MASCOTA) {
-    PantallaTutorialMascota(
-        onFinalizarTutorial = {
-            navController.navigate(Routes.MASCOTA) {
-                popUpTo(Routes.TUTORIAL_MASCOTA) { inclusive = true }
-            }
-        }
-    )
-}
-*/
