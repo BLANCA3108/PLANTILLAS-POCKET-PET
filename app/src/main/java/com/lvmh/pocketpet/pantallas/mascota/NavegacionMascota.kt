@@ -3,7 +3,7 @@ package com.lvmh.pocketpet.pantallas.mascota
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue  // AGREGAR ESTE IMPORT
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -42,14 +42,11 @@ fun NavegacionMascota(
                 )
             )
 
-            // Observar cuando se debe navegar después de crear mascota
             val debeMostrarPantallaPrincipal by viewModel.debeMostrarPantallaPrincipal.collectAsState()
 
             LaunchedEffect(debeMostrarPantallaPrincipal) {
                 if (debeMostrarPantallaPrincipal) {
-                    // Resetear el estado de navegación
                     viewModel.resetearNavegacion()
-                    // Ya estamos en la pantalla principal, no necesitamos navegar
                 }
             }
 
@@ -57,8 +54,23 @@ fun NavegacionMascota(
                 viewModel = viewModel,
                 onNavegar = { ruta ->
                     when (ruta) {
+                        // 🔥 RUTAS QUE VUELVEN A LA APP PRINCIPAL
                         "inicio" -> onVolverPrincipal?.invoke()
-                        else -> navController.navigate(ruta)
+                        "configuracion" -> onVolverPrincipal?.invoke()
+                        "categorias" -> onVolverPrincipal?.invoke()
+                        "perfil" -> onVolverPrincipal?.invoke()
+
+                        // 🎮 RUTAS INTERNAS DE LA MASCOTA
+                        else -> {
+                            // Verificar si la ruta existe en RutasMascota
+                            try {
+                                navController.navigate(ruta)
+                            } catch (e: Exception) {
+                                // Si la ruta no existe, volver al principal
+                                println("⚠️ Ruta no encontrada: $ruta")
+                                onVolverPrincipal?.invoke()
+                            }
+                        }
                     }
                 }
             )

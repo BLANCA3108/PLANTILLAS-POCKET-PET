@@ -200,9 +200,10 @@ fun PocketPetNavGraph() {
 
             val database = AppDatabase.getInstance(context)
             val firestore = FirebaseFirestore.getInstance()
+            val usuarioId = currentUser?.uid ?: "usuario_temp"
 
             NavegacionMascota(
-                usuarioId = currentUser?.uid ?: "usuario_temp",
+                usuarioId = usuarioId,
                 database = database,
                 firestore = firestore,
                 onVolverPrincipal = {
