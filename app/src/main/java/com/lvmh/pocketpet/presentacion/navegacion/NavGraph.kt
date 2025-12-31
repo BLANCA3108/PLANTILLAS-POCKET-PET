@@ -19,7 +19,11 @@ import com.lvmh.pocketpet.pantallas.mascota.NavegacionMascota
 import com.lvmh.pocketpet.presentacion.auth.LoginScreen
 import com.lvmh.pocketpet.presentacion.auth.RegistroScreen
 import com.lvmh.pocketpet.presentacion.pantallas.PantallaPrincipal
+<<<<<<< HEAD
 import com.lvmh.pocketpet.presentacion.pantallas.PantallaPresupuestos
+=======
+import com.lvmh.pocketpet.pantallas.PantallaPresupuestos
+>>>>>>> 04fa32f97f35c788da9d88545e2c467a439f06f0
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaCalendario
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaComparativos
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaEstadisticas
@@ -223,11 +227,18 @@ fun PocketPetNavGraph() {
         composable(Routes.PRESUPUESTOS) {
             val viewModel: PresupuestoViewModel = hiltViewModel()
             PantallaPresupuestos(
+<<<<<<< HEAD
                 viewModel = viewModel,
                 onBackClick = { navController.popBackStack() },
                 alNavegar = { destino ->
                     navController.navigate(destino)
                 }
+=======
+                onBackClick = {
+                    navController.popBackStack()
+                },
+                viewModel = viewModel
+>>>>>>> 04fa32f97f35c788da9d88545e2c467a439f06f0
             )
         }
 
@@ -261,8 +272,8 @@ fun PocketPetNavGraph() {
         }
 
         // ===============================
-        // 🐾 MASCOTA
-        // ===============================
+// 🐾 MASCOTA
+// ===============================
 
         composable(Routes.MASCOTA) {
             NavegacionMascota(
