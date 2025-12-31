@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mascotafinanciera.ui.theme.*
 import kotlinx.coroutines.delay
+import com.lvmh.pocketpet.presentacion.navegacion.Routes
 
 /*----MASCOTAAAAAA---*/
 data class EstadoMascota(

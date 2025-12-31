@@ -6,7 +6,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.lvmh.pocketpet.dominio.modelos.Presupuesto
-import com.lvmh.pocketpet.dominio.modelos.TipoCategoria
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,17 +23,9 @@ data class PresupuestoConInfo(
 
 data class EstadoPresupuesto(
     val presupuestos: List<PresupuestoConInfo> = emptyList(),
-    val categorias: List<CategoriaInfo> = emptyList(),
     val cargando: Boolean = false,
     val error: String? = null,
     val mensajeExito: String? = null
-)
-
-data class CategoriaInfo(
-    val id: String = "",
-    val nombre: String = "",
-    val emoji: String = "",
-    val tipo: String = "GASTO"
 )
 
 @HiltViewModel
@@ -47,7 +38,6 @@ class PresupuestoViewModel @Inject constructor(
     val estado: StateFlow<EstadoPresupuesto> = _estado.asStateFlow()
 
     private var presupuestoListener: ListenerRegistration? = null
-    private var categoriasListener: ListenerRegistration? = null
     private var transaccionesListener: ListenerRegistration? = null
     private var usuarioId: String? = null
     private var listenersActivos = false
@@ -69,57 +59,15 @@ class PresupuestoViewModel @Inject constructor(
     }
 
     private fun iniciarListeners(userId: String) {
-        println("🔵 Iniciando listeners para usuario: $userId")
+        println("🔵 [PresupuestoVM] Iniciando listeners para usuario: $userId")
         listenersActivos = true
-        escucharCategorias(userId)
         escucharPresupuestos(userId)
         escucharTransacciones(userId)
     }
 
-    private fun escucharCategorias(userId: String) {
-        categoriasListener?.remove()
-        println("🔵 Iniciando listener de categorías")
-
-        categoriasListener = firestore
-            .collection("usuarios")
-            .document(userId)
-            .collection("categorias")
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    println("❌ ERROR al escuchar categorías: ${error.message}")
-                    return@addSnapshotListener
-                }
-
-                val categorias = snapshot?.documents?.mapNotNull { doc ->
-                    try {
-                        CategoriaInfo(
-                            id = doc.id,
-                            nombre = doc.getString("nombre") ?: "",
-                            emoji = doc.getString("emoji") ?: "📊",
-                            tipo = doc.getString("tipo") ?: "GASTO"
-                        )
-                    } catch (e: Exception) {
-                        println("❌ Error al parsear categoría: ${e.message}")
-                        null
-                    }
-                } ?: emptyList()
-
-                println("✅ Categorías cargadas: ${categorias.size}")
-                categorias.forEach { cat ->
-                    println("   - ${cat.emoji} ${cat.nombre} (${cat.tipo})")
-                }
-
-                _estado.value = _estado.value.copy(categorias = categorias)
-
-                viewModelScope.launch {
-                    recalcularPresupuestos(userId)
-                }
-            }
-    }
-
     private fun escucharTransacciones(userId: String) {
         transaccionesListener?.remove()
-        println("🔵 Iniciando listener de transacciones")
+        println("🔵 [PresupuestoVM] Iniciando listener de transacciones")
 
         transaccionesListener = firestore
             .collection("usuarios")
@@ -128,20 +76,25 @@ class PresupuestoViewModel @Inject constructor(
             .whereEqualTo("tipo", "GASTO")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    println("❌ ERROR al escuchar transacciones: ${error.message}")
+                    println("❌ [PresupuestoVM] ERROR al escuchar transacciones: ${error.message}")
                     return@addSnapshotListener
                 }
 
-                println("🔵 Transacciones actualizadas, recalculando presupuestos...")
+                println("🔵 [PresupuestoVM] Transacciones actualizadas (${snapshot?.size() ?: 0}), recalculando presupuestos...")
+                snapshot?.documents?.forEach {
+                    println("   📝 Transacción: ${it.getString("categoria_nombre")} - S/.${it.getDouble("monto")}")
+                }
+
                 viewModelScope.launch {
-                    recalcularPresupuestos(userId)
+                    recalcularTodosLosPresupuestos(userId)
                 }
             }
     }
 
-    private suspend fun recalcularPresupuestos(userId: String) {
+    // 🔥 FUNCIÓN CORREGIDA: Sin índices compuestos - Filtra en memoria
+    private suspend fun recalcularTodosLosPresupuestos(userId: String) {
         try {
-            println("🔵 Iniciando recalculo de presupuestos")
+            println("🔵 [PresupuestoVM] 🔥 RECALCULANDO TODOS LOS PRESUPUESTOS")
 
             val presupuestosSnapshot = firestore
                 .collection("usuarios")
@@ -151,36 +104,64 @@ class PresupuestoViewModel @Inject constructor(
                 .get()
                 .await()
 
-            println("🔵 Presupuestos encontrados: ${presupuestosSnapshot.size()}")
+            println("🔵 [PresupuestoVM] Presupuestos activos encontrados: ${presupuestosSnapshot.size()}")
 
             presupuestosSnapshot.documents.forEach { presupuestoDoc ->
                 val categoriaId = presupuestoDoc.getString("categoria_id") ?: return@forEach
+                val categoriaNombre = presupuestoDoc.getString("categoria_nombre") ?: "Sin nombre"
                 val periodo = presupuestoDoc.getString("periodo") ?: "mensual"
                 val mesInicio = (presupuestoDoc.getLong("mes_inicio") ?: 1).toInt()
                 val anioInicio = (presupuestoDoc.getLong("anio_inicio") ?: Calendar.getInstance().get(Calendar.YEAR)).toInt()
 
-                val (fechaInicio, fechaFin) = calcularRangoPeriodo(periodo, mesInicio, anioInicio)
+                println("   🔍 Procesando presupuesto: $categoriaNombre (ID: $categoriaId)")
 
+                val (fechaInicio, fechaFin) = calcularRangoPeriodo(periodo, mesInicio, anioInicio)
+                println("   📅 Rango: $fechaInicio a $fechaFin")
+
+                // 🔥 OBTENER TODAS LAS TRANSACCIONES DE ESTA CATEGORÍA (sin filtro de fecha)
                 val transaccionesSnapshot = firestore
                     .collection("usuarios")
                     .document(userId)
                     .collection("transacciones")
                     .whereEqualTo("tipo", "GASTO")
                     .whereEqualTo("categoria_id", categoriaId)
-                    .whereGreaterThanOrEqualTo("fecha", fechaInicio)
-                    .whereLessThanOrEqualTo("fecha", fechaFin)
                     .get()
                     .await()
 
-                val totalGastado = transaccionesSnapshot.documents.sumOf {
-                    it.getDouble("monto") ?: 0.0
-                }
+                println("   📦 Transacciones totales obtenidas: ${transaccionesSnapshot.size()}")
 
-                presupuestoDoc.reference.update("gastado", totalGastado).await()
-                println("✅ Presupuesto ${presupuestoDoc.id} actualizado con gastado: $totalGastado")
+                // 🔥 FILTRAR EN MEMORIA las que están en el período
+                val totalGastado = transaccionesSnapshot.documents
+                    .mapNotNull { doc ->
+                        val fecha = doc.getLong("fecha") ?: 0L
+                        val monto = doc.getDouble("monto") ?: 0.0
+                        if (fecha in fechaInicio..fechaFin) {
+                            println("      ✅ Transacción incluida: fecha=$fecha, monto=S/.$monto")
+                            monto
+                        } else {
+                            println("      ❌ Transacción excluida: fecha=$fecha (fuera de rango)")
+                            null
+                        }
+                    }
+                    .sum()
+
+                println("   💰 Total gastado calculado: S/.$totalGastado")
+
+                // 🔥 ACTUALIZAR EL PRESUPUESTO EN FIRESTORE
+                presupuestoDoc.reference.update(
+                    mapOf(
+                        "gastado" to totalGastado,
+                        "ultima_actualizacion" to System.currentTimeMillis()
+                    )
+                ).await()
+
+                println("   ✅ Presupuesto actualizado: $categoriaNombre - Gastado: S/.$totalGastado")
             }
+
+            println("✅ [PresupuestoVM] 🎉 TODOS LOS PRESUPUESTOS RECALCULADOS")
+
         } catch (e: Exception) {
-            println("❌ ERROR al recalcular presupuestos: ${e.message}")
+            println("❌ [PresupuestoVM] ERROR al recalcular presupuestos: ${e.message}")
             e.printStackTrace()
         }
     }
@@ -213,7 +194,7 @@ class PresupuestoViewModel @Inject constructor(
     private fun escucharPresupuestos(userId: String) {
         presupuestoListener?.remove()
         _estado.value = _estado.value.copy(cargando = true)
-        println("🔵 Iniciando listener de presupuestos")
+        println("🔵 [PresupuestoVM] Iniciando listener de presupuestos")
 
         presupuestoListener = firestore
             .collection("usuarios")
@@ -222,7 +203,7 @@ class PresupuestoViewModel @Inject constructor(
             .whereEqualTo("activo", true)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    println("❌ ERROR al escuchar presupuestos: ${error.message}")
+                    println("❌ [PresupuestoVM] ERROR al escuchar presupuestos: ${error.message}")
                     _estado.value = _estado.value.copy(
                         cargando = false,
                         error = "Error al cargar presupuestos: ${error.message}"
@@ -249,21 +230,32 @@ class PresupuestoViewModel @Inject constructor(
                                 fechaCreacion = doc.getLong("fecha_creacion") ?: System.currentTimeMillis()
                             )
 
-                            val categoriaInfo = _estado.value.categorias.find { it.id == presupuesto.categoriaId }
+                            val categoriaDoc = firestore
+                                .collection("usuarios")
+                                .document(userId)
+                                .collection("categorias")
+                                .document(presupuesto.categoriaId)
+                                .get()
+                                .await()
+
+                            val categoriaNombre = categoriaDoc.getString("nombre") ?: "Sin categoría"
+                            val categoriaEmoji = categoriaDoc.getString("emoji") ?: "📊"
+
+                            println("   📊 Presupuesto cargado: $categoriaEmoji $categoriaNombre - Gastado: S/.${presupuesto.gastado}/${presupuesto.monto}")
 
                             presupuestosConInfo.add(
                                 PresupuestoConInfo(
                                     presupuesto = presupuesto,
-                                    categoriaNombre = categoriaInfo?.nombre ?: "Sin categoría",
-                                    categoriaEmoji = categoriaInfo?.emoji ?: "📊"
+                                    categoriaNombre = categoriaNombre,
+                                    categoriaEmoji = categoriaEmoji
                                 )
                             )
                         } catch (e: Exception) {
-                            println("❌ ERROR al parsear presupuesto: ${e.message}")
+                            println("❌ [PresupuestoVM] ERROR al parsear presupuesto: ${e.message}")
                         }
                     }
 
-                    println("✅ Presupuestos con info: ${presupuestosConInfo.size}")
+                    println("✅ [PresupuestoVM] Presupuestos con info actualizados: ${presupuestosConInfo.size}")
 
                     _estado.value = _estado.value.copy(
                         presupuestos = presupuestosConInfo,
@@ -272,49 +264,6 @@ class PresupuestoViewModel @Inject constructor(
                     )
                 }
             }
-    }
-
-    // ✅ NUEVA FUNCIÓN: Crear categoría desde el diálogo
-    fun crearCategoria(
-        nombre: String,
-        emoji: String,
-        tipo: String,
-        onSuccess: (String) -> Unit
-    ) {
-        val userId = usuarioId ?: run {
-            _estado.value = _estado.value.copy(error = "Usuario no autenticado")
-            return
-        }
-
-        viewModelScope.launch {
-            try {
-                println("🔵 Creando categoría: $nombre ($emoji) - Tipo: $tipo")
-
-                val categoriaData = hashMapOf(
-                    "nombre" to nombre,
-                    "emoji" to emoji,
-                    "tipo" to tipo.uppercase(),
-                    "fecha_creacion" to System.currentTimeMillis(),
-                    "usuario_id" to userId
-                )
-
-                val docRef = firestore
-                    .collection("usuarios")
-                    .document(userId)
-                    .collection("categorias")
-                    .add(categoriaData)
-                    .await()
-
-                println("✅ Categoría creada con ID: ${docRef.id}")
-                onSuccess(docRef.id)
-
-            } catch (e: Exception) {
-                println("❌ ERROR al crear categoría: ${e.message}")
-                _estado.value = _estado.value.copy(
-                    error = "Error al crear categoría: ${e.message}"
-                )
-            }
-        }
     }
 
     fun crearPresupuesto(
@@ -331,24 +280,25 @@ class PresupuestoViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _estado.value = _estado.value.copy(cargando = true)
-                println("🔵 Creando presupuesto para categoría: $categoriaId")
+                println("🔵 [PresupuestoVM] Creando presupuesto para categoría: $categoriaId")
 
-                val categoriaExiste = firestore
+                val categoriaDoc = firestore
                     .collection("usuarios")
                     .document(userId)
                     .collection("categorias")
                     .document(categoriaId)
                     .get()
                     .await()
-                    .exists()
 
-                if (!categoriaExiste) {
+                if (!categoriaDoc.exists()) {
                     _estado.value = _estado.value.copy(
                         cargando = false,
                         error = "La categoría no existe"
                     )
                     return@launch
                 }
+
+                val categoriaNombre = categoriaDoc.getString("nombre") ?: "Sin nombre"
 
                 val presupuestoExistente = firestore
                     .collection("usuarios")
@@ -373,6 +323,7 @@ class PresupuestoViewModel @Inject constructor(
 
                 val (fechaInicio, fechaFin) = calcularRangoPeriodo(periodo.lowercase(), mesActual, anioActual)
 
+                // 🔥 OBTENER TODAS las transacciones de esta categoría (sin filtro de fecha)
                 val transaccionesExistentes = firestore
                     .collection("usuarios")
                     .document(userId)
@@ -382,18 +333,21 @@ class PresupuestoViewModel @Inject constructor(
                     .get()
                     .await()
 
+                // 🔥 FILTRAR EN MEMORIA las que están en el período actual
                 val gastoInicial = transaccionesExistentes.documents
-                    .filter { doc ->
+                    .mapNotNull { doc ->
                         val fecha = doc.getLong("fecha") ?: 0L
-                        fecha in fechaInicio..fechaFin
+                        val monto = doc.getDouble("monto") ?: 0.0
+                        if (fecha in fechaInicio..fechaFin) monto else null
                     }
-                    .sumOf { it.getDouble("monto") ?: 0.0 }
+                    .sum()
 
-                println("🔵 Gasto inicial calculado: $gastoInicial")
+                println("🔵 [PresupuestoVM] Gasto inicial calculado: S/.$gastoInicial (${transaccionesExistentes.size()} transacciones)")
 
                 val presupuestoData = hashMapOf(
                     "usuario_id" to userId,
                     "categoria_id" to categoriaId,
+                    "categoria_nombre" to categoriaNombre,
                     "monto" to monto,
                     "gastado" to gastoInicial,
                     "periodo" to periodo.lowercase(),
@@ -401,7 +355,8 @@ class PresupuestoViewModel @Inject constructor(
                     "anio_inicio" to anioActual,
                     "activo" to true,
                     "alerta_en" to alertaEn,
-                    "fecha_creacion" to System.currentTimeMillis()
+                    "fecha_creacion" to System.currentTimeMillis(),
+                    "ultima_actualizacion" to System.currentTimeMillis()
                 )
 
                 firestore
@@ -422,68 +377,12 @@ class PresupuestoViewModel @Inject constructor(
                 )
 
             } catch (e: Exception) {
-                println("❌ ERROR al crear presupuesto: ${e.message}")
+                println("❌ [PresupuestoVM] ERROR al crear presupuesto: ${e.message}")
                 _estado.value = _estado.value.copy(
                     cargando = false,
                     error = "❌ Error: ${e.message}"
                 )
             }
-        }
-    }
-
-    suspend fun actualizarGastoPresupuesto(
-        categoriaId: String,
-        monto: Double,
-        esNuevaTransaccion: Boolean = true
-    ) {
-        val userId = usuarioId ?: return
-
-        try {
-            println("🔵 actualizarGasto: catId=$categoriaId, monto=$monto, esNueva=$esNuevaTransaccion")
-
-            val presupuestosSnapshot = firestore
-                .collection("usuarios")
-                .document(userId)
-                .collection("presupuestos")
-                .whereEqualTo("categoria_id", categoriaId)
-                .whereEqualTo("activo", true)
-                .get()
-                .await()
-
-            if (presupuestosSnapshot.isEmpty) {
-                println("🔵 No hay presupuesto activo para esta categoría")
-                return
-            }
-
-            presupuestosSnapshot.documents.forEach { doc ->
-                val gastoActual = doc.getDouble("gastado") ?: 0.0
-                val nuevoGasto = if (esNuevaTransaccion) {
-                    gastoActual + monto
-                } else {
-                    (gastoActual - monto).coerceAtLeast(0.0)
-                }
-
-                println("🔵 Gastado actual: $gastoActual, Nuevo gastado: $nuevoGasto")
-                doc.reference.update("gastado", nuevoGasto).await()
-
-                val montoPresupuesto = doc.getDouble("monto") ?: 0.0
-                val alertaEn = (doc.getLong("alerta_en") ?: 80).toInt()
-
-                if (montoPresupuesto > 0) {
-                    val porcentaje = (nuevoGasto / montoPresupuesto) * 100
-                    val categoriaNombre = _estado.value.categorias.find { it.id == categoriaId }?.nombre ?: "Categoría"
-
-                    if (esNuevaTransaccion && porcentaje >= alertaEn) {
-                        _estado.value = _estado.value.copy(
-                            mensajeExito = "⚠️ Has usado el ${porcentaje.toInt()}% de tu presupuesto de $categoriaNombre"
-                        )
-                    }
-                }
-            }
-
-        } catch (e: Exception) {
-            println("❌ ERROR al actualizar gasto: ${e.message}")
-            e.printStackTrace()
         }
     }
 
@@ -517,14 +416,6 @@ class PresupuestoViewModel @Inject constructor(
         }
     }
 
-    fun obtenerCategoriasParaPresupuesto(): List<CategoriaInfo> {
-        val categorias = _estado.value.categorias.filter {
-            it.tipo == TipoCategoria.GASTO.name
-        }
-        println("🔵 Categorías de GASTO disponibles: ${categorias.size}")
-        return categorias
-    }
-
     fun limpiarMensajes() {
         _estado.value = _estado.value.copy(
             error = null,
@@ -533,27 +424,25 @@ class PresupuestoViewModel @Inject constructor(
     }
 
     fun pausarListeners() {
-        println("🔵 Pausando listeners")
+        println("🔵 [PresupuestoVM] Pausando listeners")
         listenersActivos = false
         presupuestoListener?.remove()
-        categoriasListener?.remove()
         transaccionesListener?.remove()
     }
 
     fun reanudarListeners() {
         val userId = usuarioId
         if (userId != null && !listenersActivos) {
-            println("🔵 Reanudando listeners")
+            println("🔵 [PresupuestoVM] Reanudando listeners")
             iniciarListeners(userId)
         }
     }
 
     override fun onCleared() {
         super.onCleared()
-        println("🔵 ViewModel limpiado, removiendo listeners")
+        println("🔵 [PresupuestoVM] ViewModel limpiado, removiendo listeners")
         listenersActivos = false
         presupuestoListener?.remove()
-        categoriasListener?.remove()
         transaccionesListener?.remove()
     }
 }

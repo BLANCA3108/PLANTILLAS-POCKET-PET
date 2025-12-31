@@ -1,5 +1,7 @@
 package com.lvmh.pocketpet.presentacion.pantallas.estadisticas
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -10,8 +12,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.lvmh.pocketpet.dominio.utilidades.PuntoGrafico
 import com.lvmh.pocketpet.presentacion.viewmodels.EstadisticasViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -22,10 +29,7 @@ fun PantallaEstadisticas(
 ) {
     val estado by viewModel.estado.collectAsState()
 
-    // Inicializar con un userId temporal
-    LaunchedEffect(Unit) {
-        viewModel.establecerUsuario("usuario_temp")
-    }
+    // ✅ YA NO necesitas LaunchedEffect, el ViewModel se inicializa automáticamente
 
     Scaffold(
         topBar = {
@@ -64,7 +68,25 @@ fun PantallaEstadisticas(
                         .padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = estado.error ?: "Error desconocido")
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Text(
+                            text = estado.error ?: "Error desconocido",
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center
+                        )
+                        Button(onClick = { viewModel.inicializar() }) {
+                            Text("Reintentar")
+                        }
+                    }
                 }
             }
 
@@ -103,7 +125,7 @@ private fun ContenidoEstadisticas(
 
         item {
             Text(
-                text = "Resumen",
+                text = "Resumen ${obtenerNombrePeriodo(estado.periodoSeleccionado)}",
                 style = MaterialTheme.typography.titleLarge
             )
         }
@@ -117,7 +139,7 @@ private fun ContenidoEstadisticas(
                 ) {
                     TarjetaEstadistica(
                         titulo = "Ingresos",
-                        valor = "$${String.format("%.2f", stats.totalIngresos)}",
+                        valor = "S/. ${String.format("%.2f", stats.totalIngresos)}",
                         icono = {
                             Icon(
                                 Icons.Default.TrendingUp,
@@ -132,7 +154,7 @@ private fun ContenidoEstadisticas(
 
                     TarjetaEstadistica(
                         titulo = "Gastos",
-                        valor = "$${String.format("%.2f", stats.totalGastos)}",
+                        valor = "S/. ${String.format("%.2f", stats.totalGastos)}",
                         icono = {
                             Icon(
                                 Icons.Default.TrendingDown,
@@ -150,7 +172,7 @@ private fun ContenidoEstadisticas(
             item {
                 TarjetaEstadistica(
                     titulo = "Balance",
-                    valor = "$${String.format("%.2f", stats.balance)}",
+                    valor = "S/. ${String.format("%.2f", stats.balance)}",
                     icono = {
                         Icon(
                             Icons.Default.AccountBalance,
@@ -165,41 +187,41 @@ private fun ContenidoEstadisticas(
                         Color(0xFF1E40AF) else Color(0xFF991B1B)
                 )
             }
-        }
 
-        item {
-            Text(
-                text = "Gráfico",
-                style = MaterialTheme.typography.titleLarge
-            )
-        }
-
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (estado.datosGrafico.isNotEmpty()) {
-                        Text(
-                            text = "Datos del gráfico: ${estado.datosGrafico.size} puntos",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+            if (stats.categoriaConMasGastos.isNotBlank() && stats.categoriaConMasGastos != "Sin gastos") {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFFEF3C7)
                         )
-                    } else {
-                        Text(
-                            text = "Sin datos para mostrar",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = "Categoría con más gastos",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color(0xFF92400E)
+                                )
+                                Text(
+                                    text = stats.categoriaConMasGastos,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color(0xFF78350F)
+                                )
+                            }
+                            Icon(
+                                Icons.Default.Category,
+                                contentDescription = null,
+                                tint = Color(0xFFD97706),
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -207,33 +229,123 @@ private fun ContenidoEstadisticas(
 
         item {
             Text(
-                text = "Acciones Rápidas",
+                text = "Gráfico de Gastos",
                 style = MaterialTheme.typography.titleLarge
             )
         }
 
         item {
+            if (estado.datosGrafico.isNotEmpty()) {
+                GraficoBarras(
+                    datos = estado.datosGrafico,
+                    modificador = Modifier
+                        .fillMaxWidth()
+                        .height(250.dp)
+                )
+            } else {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            Icons.Default.ShowChart,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = "No hay transacciones en este período",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GraficoBarras(
+    datos: List<PuntoGrafico>,
+    modificador: Modifier = Modifier
+) {
+    Card(
+        modifier = modificador,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            val maxValor = datos.maxOfOrNull { it.valor } ?: 1.0
+
+            // Área del gráfico
+            Canvas(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                val barWidth = size.width / datos.size
+                val barSpacing = barWidth * 0.2f
+                val actualBarWidth = barWidth - barSpacing
+
+                datos.forEachIndexed { index, punto ->
+                    val barHeight = if (maxValor > 0) {
+                        (punto.valor / maxValor * size.height * 0.9).toFloat()
+                    } else 0f
+
+                    val x = index * barWidth + barSpacing / 2
+                    val y = size.height - barHeight
+
+                    // Dibujar barra
+                    drawRect(
+                        color = Color(0xFF3B82F6),
+                        topLeft = Offset(x, y),
+                        size = androidx.compose.ui.geometry.Size(actualBarWidth, barHeight)
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            // Etiquetas
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-
-                OutlinedButton(
-                    onClick = { alNavegar("estadisticas_categorias") },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.Category, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Por Categoría")
-                }
-
-                OutlinedButton(
-                    onClick = { alNavegar("tendencias") },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.ShowChart, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Tendencias")
+                datos.forEach { punto ->
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = punto.etiqueta,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 1,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "S/. ${String.format("%.0f", punto.valor)}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         }
@@ -259,7 +371,10 @@ private fun SelectorPeriodo(
             FilterChip(
                 selected = periodo == periodoSeleccionado,
                 onClick = { alSeleccionar(periodo) },
-                label = { Text(etiquetas[periodo] ?: periodo) }
+                label = { Text(etiquetas[periodo] ?: periodo) },
+                leadingIcon = if (periodo == periodoSeleccionado) {
+                    { Icon(Icons.Default.Check, contentDescription = null, Modifier.size(18.dp)) }
+                } else null
             )
         }
     }
@@ -304,5 +419,14 @@ private fun TarjetaEstadistica(
                 color = colorTexto
             )
         }
+    }
+}
+
+private fun obtenerNombrePeriodo(periodo: String): String {
+    return when (periodo) {
+        "semana" -> "de la Semana"
+        "mes" -> "del Mes"
+        "anio" -> "del Año"
+        else -> ""
     }
 }

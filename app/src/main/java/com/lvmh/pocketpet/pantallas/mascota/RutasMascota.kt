@@ -13,5 +13,5 @@ sealed class RutasMascota(val ruta: String) {
     object Estadisticas : RutasMascota("mascota_estadisticas")
     object MenuJuegos : RutasMascota("mascota_juegos")
     object BuscaMinas : RutasMascota("juego_buscaminas") // 👈 AGREGADO
-    object AtrapaMonedas : RutasMascota("juego_atrapamonedas") // 👈 AGREGADO
+    object AtrapaMonedas : RutasMascota("juego_atrapamonedas")
 }

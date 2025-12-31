@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.util.Calendar
 import javax.inject.Inject
 
 @HiltViewModel
@@ -110,7 +111,7 @@ class TransaccionViewModel @Inject constructor(
         _totalGastos.value = gastos
         _balance.value = ingresos - gastos
 
-        println("💰 Balance: S/.${_balance.value} (Ingresos: S/.$ingresos, Gastos: S/.$gastos)")
+        println("💰 [TransaccionVM] Balance: S/.${_balance.value} (Ingresos: S/.$ingresos, Gastos: S/.$gastos)")
     }
 
     fun crearTransaccion(
@@ -145,11 +146,12 @@ class TransaccionViewModel @Inject constructor(
                     .add(transaccionData)
                     .await()
 
-                println("✅ [TransaccionVM] Transacción creada")
+                println("✅ [TransaccionVM] Transacción creada exitosamente")
 
-                // 🔥 ACTUALIZAR PRESUPUESTO si es un gasto
+                // 🔥 SI ES GASTO, ACTUALIZAR PRESUPUESTOS INMEDIATAMENTE
                 if (tipo == TipoTransaccion.GASTO) {
-                    actualizarPresupuesto(userId, categoriaId, monto, esNueva = true)
+                    println("🔥 [TransaccionVM] Es un GASTO, actualizando presupuestos...")
+                    actualizarPresupuestosDeLaCategoria(userId, categoriaId)
                 }
 
             } catch (e: Exception) {
@@ -159,17 +161,13 @@ class TransaccionViewModel @Inject constructor(
         }
     }
 
-    // 🔥 NUEVA FUNCIÓN: Actualizar presupuesto automáticamente
-    private suspend fun actualizarPresupuesto(
-        userId: String,
-        categoriaId: String,
-        monto: Double,
-        esNueva: Boolean
-    ) {
+    // 🔥 FUNCIÓN SIN ÍNDICES COMPUESTOS - Filtra en memoria
+    private suspend fun actualizarPresupuestosDeLaCategoria(userId: String, categoriaId: String) {
         try {
-            println("🔵 [TransaccionVM] Actualizando presupuesto para categoría: $categoriaId")
+            println("🔥 [TransaccionVM] Buscando presupuestos activos para categoría: $categoriaId")
 
-            val presupuestos = firestore
+            // Buscar TODOS los presupuestos activos de esta categoría
+            val presupuestosSnapshot = firestore
                 .collection("usuarios")
                 .document(userId)
                 .collection("presupuestos")
@@ -178,37 +176,97 @@ class TransaccionViewModel @Inject constructor(
                 .get()
                 .await()
 
-            if (presupuestos.isEmpty) {
-                println("ℹ️ [TransaccionVM] No hay presupuesto activo para esta categoría")
+            println("🔥 [TransaccionVM] Presupuestos encontrados: ${presupuestosSnapshot.size()}")
+
+            if (presupuestosSnapshot.isEmpty) {
+                println("ℹ️ [TransaccionVM] No hay presupuestos activos para esta categoría")
                 return
             }
 
-            presupuestos.documents.forEach { doc ->
-                val gastoActual = doc.getDouble("gastado") ?: 0.0
-                val nuevoGasto = if (esNueva) {
-                    gastoActual + monto
-                } else {
-                    (gastoActual - monto).coerceAtLeast(0.0)
-                }
+            // Para cada presupuesto encontrado
+            presupuestosSnapshot.documents.forEach { presupuestoDoc ->
+                val presupuestoId = presupuestoDoc.id
+                val periodo = presupuestoDoc.getString("periodo") ?: "mensual"
+                val mesInicio = (presupuestoDoc.getLong("mes_inicio") ?: 1).toInt()
+                val anioInicio = (presupuestoDoc.getLong("anio_inicio") ?: Calendar.getInstance().get(Calendar.YEAR)).toInt()
 
-                doc.reference.update("gastado", nuevoGasto).await()
-                println("✅ [TransaccionVM] Presupuesto actualizado: gastado = S/.$nuevoGasto")
+                println("   📊 Procesando presupuesto ID: $presupuestoId - Período: $periodo")
 
-                // Verificar alertas
-                val montoPresupuesto = doc.getDouble("monto") ?: 0.0
-                val alertaEn = (doc.getLong("alerta_en") ?: 80).toInt()
+                // Calcular el rango de fechas del período
+                val (fechaInicio, fechaFin) = calcularRangoPeriodo(periodo, mesInicio, anioInicio)
+                println("   📅 Rango: $fechaInicio a $fechaFin")
 
-                if (montoPresupuesto > 0 && esNueva) {
-                    val porcentaje = (nuevoGasto / montoPresupuesto) * 100
-                    if (porcentaje >= alertaEn) {
-                        println("⚠️ [TransaccionVM] Alerta: ${porcentaje.toInt()}% del presupuesto usado")
+                // 🔥 OBTENER TODAS LAS TRANSACCIONES DE GASTO DE ESTA CATEGORÍA (sin filtro de fecha)
+                val transaccionesSnapshot = firestore
+                    .collection("usuarios")
+                    .document(userId)
+                    .collection("transacciones")
+                    .whereEqualTo("tipo", "GASTO")
+                    .whereEqualTo("categoria_id", categoriaId)
+                    .get()
+                    .await()
+
+                println("   📦 Transacciones totales obtenidas: ${transaccionesSnapshot.size()}")
+
+                // 🔥 FILTRAR EN MEMORIA las que están en el período
+                val totalGastado = transaccionesSnapshot.documents
+                    .mapNotNull { doc ->
+                        val fecha = doc.getLong("fecha") ?: 0L
+                        val monto = doc.getDouble("monto") ?: 0.0
+                        if (fecha in fechaInicio..fechaFin) {
+                            println("      ✅ Transacción incluida: fecha=$fecha, monto=S/.$monto")
+                            monto
+                        } else {
+                            println("      ❌ Transacción excluida: fecha=$fecha (fuera de rango)")
+                            null
+                        }
                     }
-                }
+                    .sum()
+
+                println("   💰 Total gastado calculado: S/.$totalGastado")
+
+                // 🔥 ACTUALIZAR EL PRESUPUESTO EN FIRESTORE
+                presupuestoDoc.reference.update(
+                    mapOf(
+                        "gastado" to totalGastado,
+                        "ultima_actualizacion" to System.currentTimeMillis()
+                    )
+                ).await()
+
+                println("   ✅ Presupuesto ID $presupuestoId actualizado con gastado = S/.$totalGastado")
             }
 
+            println("✅ [TransaccionVM] 🎉 TODOS los presupuestos de la categoría actualizados")
+
         } catch (e: Exception) {
-            println("❌ [TransaccionVM] Error actualizando presupuesto: ${e.message}")
+            println("❌ [TransaccionVM] Error actualizando presupuestos: ${e.message}")
+            e.printStackTrace()
         }
+    }
+
+    private fun calcularRangoPeriodo(periodo: String, mesInicio: Int, anioInicio: Int): Pair<Long, Long> {
+        val calendario = Calendar.getInstance()
+
+        calendario.set(Calendar.YEAR, anioInicio)
+        calendario.set(Calendar.MONTH, mesInicio - 1)
+        calendario.set(Calendar.DAY_OF_MONTH, 1)
+        calendario.set(Calendar.HOUR_OF_DAY, 0)
+        calendario.set(Calendar.MINUTE, 0)
+        calendario.set(Calendar.SECOND, 0)
+        calendario.set(Calendar.MILLISECOND, 0)
+        val fechaInicio = calendario.timeInMillis
+
+        when (periodo.lowercase()) {
+            "semanal" -> calendario.add(Calendar.WEEK_OF_YEAR, 1)
+            "mensual" -> calendario.add(Calendar.MONTH, 1)
+            "trimestral" -> calendario.add(Calendar.MONTH, 3)
+            "anual" -> calendario.add(Calendar.YEAR, 1)
+            else -> calendario.add(Calendar.MONTH, 1)
+        }
+        calendario.add(Calendar.MILLISECOND, -1)
+        val fechaFin = calendario.timeInMillis
+
+        return Pair(fechaInicio, fechaFin)
     }
 
     fun eliminarTransaccion(transaccion: Transaccion) {
@@ -228,9 +286,10 @@ class TransaccionViewModel @Inject constructor(
 
                 println("✅ [TransaccionVM] Transacción eliminada")
 
-                // 🔥 ACTUALIZAR PRESUPUESTO si era un gasto
+                // 🔥 SI ERA UN GASTO, ACTUALIZAR PRESUPUESTOS
                 if (transaccion.tipo == TipoTransaccion.GASTO) {
-                    actualizarPresupuesto(userId, transaccion.categoriaId, transaccion.monto, esNueva = false)
+                    println("🔥 [TransaccionVM] Era un GASTO, actualizando presupuestos...")
+                    actualizarPresupuestosDeLaCategoria(userId, transaccion.categoriaId)
                 }
 
             } catch (e: Exception) {
