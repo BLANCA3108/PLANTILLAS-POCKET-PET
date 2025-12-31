@@ -171,7 +171,6 @@ fun PocketPetNavGraph() {
             val vm: EstadisticasViewModel = hiltViewModel()
             PantallaCalendario(
                 viewModel = vm,
-                usuarioId = userId.ifEmpty { "usuario_demo_001" },
                 alRegresar = { navController.popBackStack() }
             )
         }
