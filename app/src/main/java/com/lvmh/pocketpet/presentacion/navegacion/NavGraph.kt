@@ -19,7 +19,7 @@ import com.lvmh.pocketpet.pantallas.mascota.NavegacionMascota
 import com.lvmh.pocketpet.presentacion.auth.LoginScreen
 import com.lvmh.pocketpet.presentacion.auth.RegistroScreen
 import com.lvmh.pocketpet.presentacion.pantallas.PantallaPrincipal
-import com.lvmh.pocketpet.presentacion.pantallas.PantallaPresupuestos  // ← CORREGIDO AQUÍ
+import com.lvmh.pocketpet.presentacion.pantallas.PantallaPresupuestos
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaCalendario
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaComparativos
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaEstadisticas
@@ -124,7 +124,6 @@ fun PocketPetNavGraph() {
                     }
                 )
             } else {
-                // Redirigir al login si no está autenticado
                 LaunchedEffect(Unit) {
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(Routes.PRINCIPAL) { inclusive = true }
@@ -134,14 +133,21 @@ fun PocketPetNavGraph() {
         }
 
         // ===============================
-        // 👤 PERFIL
+        // 👤 PERFIL - 🔥 ACTUALIZADO CON LOGOUT
         // ===============================
 
         composable(Routes.MI_PERFIL) {
             MiPerfil(
                 onBack = {
                     navController.popBackStack()
-                }
+                },
+                onLogoutSuccess = {
+                    // Navegar al logo/login y limpiar todo el stack
+                    navController.navigate(Routes.LOGO) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                authViewModel = authViewModel
             )
         }
 
@@ -214,12 +220,11 @@ fun PocketPetNavGraph() {
         // 💰 PRESUPUESTOS Y METAS
         // ===============================
 
-        // En NavGraph.kt
         composable(Routes.PRESUPUESTOS) {
             val viewModel: PresupuestoViewModel = hiltViewModel()
             PantallaPresupuestos(
                 viewModel = viewModel,
-                onBackClick = { navController.popBackStack() },  // ← Agregar esto
+                onBackClick = { navController.popBackStack() },
                 alNavegar = { destino ->
                     navController.navigate(destino)
                 }
@@ -270,26 +275,3 @@ fun PocketPetNavGraph() {
         }
     }
 }
-
-// 👇 COMENTAMOS ESTAS HASTA QUE LAS CREES
-/*
-composable(Routes.SELECCIONAR_MASCOTA) {
-    PantallaSeleccionMascota(
-        onMascotaSeleccionada = { mascotaTipo ->
-            navController.navigate(Routes.TUTORIAL_MASCOTA) {
-                popUpTo(Routes.SELECCIONAR_MASCOTA) { inclusive = true }
-            }
-        }
-    )
-}
-
-composable(Routes.TUTORIAL_MASCOTA) {
-    PantallaTutorialMascota(
-        onFinalizarTutorial = {
-            navController.navigate(Routes.MASCOTA) {
-                popUpTo(Routes.TUTORIAL_MASCOTA) { inclusive = true }
-            }
-        }
-    )
-}
-*/

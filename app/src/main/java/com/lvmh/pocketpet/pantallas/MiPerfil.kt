@@ -1,3 +1,4 @@
+// MiPerfil.kt - VERSIÓN COMPLETA CON CERRAR SESIÓN
 package com.lvmh.pocketpet.pantallas
 
 import androidx.compose.animation.core.*
@@ -23,12 +24,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.lvmh.pocketpet.presentacion.viewmodels.AuthViewModel
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MiPerfil(
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    onLogoutSuccess: () -> Unit = {},
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     // Colores
     val rosadoSuave = Color(0xFFFFB6C1)
@@ -37,13 +42,19 @@ fun MiPerfil(
     val moradoClaro = Color(0xFFF8F0FF)
     val azulMasculino = Color(0xFF64B5F6)
     val rosadoFemenino = Color(0xFFF48FB1)
+    val rojoError = Color(0xFFF44336)
 
-    // Estados
+    // Estados locales
     var nombre by remember { mutableStateOf("") }
     var usuario by remember { mutableStateOf("") }
     var generoSeleccionado by remember { mutableStateOf<String?>(null) }
     var mostrarDialogoNombre by remember { mutableStateOf(false) }
     var mostrarDialogoUsuario by remember { mutableStateOf(false) }
+    var mostrarDialogoCerrarSesion by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Estados del ViewModel
+    val isLoggingOut by authViewModel.isLoggingOut.collectAsState()
 
     // Animación
     var startAnimation by remember { mutableStateOf(false) }
@@ -157,9 +168,135 @@ fun MiPerfil(
                     rosadoFemenino = rosadoFemenino
                 )
 
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // 🔥 BOTÓN DE CERRAR SESIÓN
+                Button(
+                    onClick = { mostrarDialogoCerrarSesion = true },
+                    enabled = !isLoggingOut,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = rojoError
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .shadow(elevation = 8.dp, shape = RoundedCornerShape(16.dp)),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    if (isLoggingOut) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text("Cerrando sesión...", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.ExitToApp,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text("Cerrar Sesión", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                // Mostrar error si existe
+                errorMessage?.let { error ->
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = rojoError.copy(alpha = 0.1f)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = rojoError,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = error,
+                                color = rojoError,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(40.dp))
             }
         }
+    }
+
+    // 🔥 DIÁLOGO DE CONFIRMACIÓN DE CERRAR SESIÓN
+    if (mostrarDialogoCerrarSesion) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoCerrarSesion = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.ExitToApp,
+                    contentDescription = null,
+                    tint = rojoError,
+                    modifier = Modifier.size(48.dp)
+                )
+            },
+            title = {
+                Text(
+                    "¿Cerrar Sesión?",
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 20.sp
+                )
+            },
+            text = {
+                Text(
+                    "¿Estás seguro de que deseas cerrar sesión? Tendrás que volver a iniciar sesión para acceder a tu cuenta.",
+                    fontSize = 15.sp,
+                    color = Color.Gray
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        mostrarDialogoCerrarSesion = false
+                        authViewModel.signOut(
+                            onSuccess = {
+                                onLogoutSuccess()
+                            },
+                            onError = { error ->
+                                errorMessage = error
+                            }
+                        )
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = rojoError
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Sí, cerrar sesión", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { mostrarDialogoCerrarSesion = false },
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Cancelar", color = Color.Gray, fontWeight = FontWeight.Bold)
+                }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
     }
 
     // Diálogo para editar nombre
