@@ -22,10 +22,6 @@ class AuthViewModel @Inject constructor(
     private val _isAuthenticated = MutableStateFlow(false)
     val isAuthenticated: StateFlow<Boolean> = _isAuthenticated.asStateFlow()
 
-    // 🆕 USER ID - AGREGADO
-    private val _userId = MutableStateFlow<String?>(null)
-    val userId: StateFlow<String?> = _userId.asStateFlow()
-
     // Estado de la UI
     private val _uiState = MutableStateFlow<AuthState>(AuthState.NotAuthenticated)
     val uiState: StateFlow<AuthState> = _uiState.asStateFlow()
@@ -43,7 +39,6 @@ class AuthViewModel @Inject constructor(
         val user = auth.currentUser
         _isAuthenticated.value = user != null
         _currentUser.value = user
-        _userId.value = user?.uid // 🆕 ACTUALIZAR userId
 
         if (user != null) {
             _uiState.value = AuthState.Authenticated(user.email ?: "")
@@ -74,14 +69,12 @@ class AuthViewModel @Inject constructor(
                 if (user != null) {
                     _isAuthenticated.value = true
                     _currentUser.value = user
-                    _userId.value = user.uid // 🆕 ACTUALIZAR userId
                     _uiState.value = AuthState.Success("Cuenta creada exitosamente")
                 } else {
                     _uiState.value = AuthState.Error("Error al crear la cuenta")
                 }
             } catch (e: Exception) {
                 _isAuthenticated.value = false
-                _userId.value = null // 🆕 LIMPIAR userId
                 _uiState.value = AuthState.Error(
                     when {
                         e.message?.contains("email address is already in use") == true ->
@@ -112,14 +105,12 @@ class AuthViewModel @Inject constructor(
                 if (user != null) {
                     _isAuthenticated.value = true
                     _currentUser.value = user
-                    _userId.value = user.uid // 🆕 ACTUALIZAR userId
                     _uiState.value = AuthState.Success("Bienvenido de nuevo")
                 } else {
                     _uiState.value = AuthState.Error("Error al iniciar sesión")
                 }
             } catch (e: Exception) {
                 _isAuthenticated.value = false
-                _userId.value = null // 🆕 LIMPIAR userId
                 _uiState.value = AuthState.Error(
                     when {
                         e.message?.contains("password is invalid") == true ||
@@ -139,7 +130,6 @@ class AuthViewModel @Inject constructor(
         auth.signOut()
         _isAuthenticated.value = false
         _currentUser.value = null
-        _userId.value = null // 🆕 LIMPIAR userId
         _uiState.value = AuthState.NotAuthenticated
     }
 

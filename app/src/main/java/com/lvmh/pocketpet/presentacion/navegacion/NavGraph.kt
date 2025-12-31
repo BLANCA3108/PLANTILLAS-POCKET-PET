@@ -10,9 +10,28 @@ import com.lvmh.pocketpet.pantallas.*
 import com.lvmh.pocketpet.pantallas.mascota.NavegacionMascota
 import com.lvmh.pocketpet.presentacion.auth.LoginScreen
 import com.lvmh.pocketpet.presentacion.auth.RegistroScreen
+<<<<<<< HEAD
+import com.lvmh.pocketpet.presentacion.pantallas.PantallaPrincipal
+<<<<<<< HEAD
+import com.lvmh.pocketpet.presentacion.pantallas.PantallaPresupuestos
+=======
+import com.lvmh.pocketpet.pantallas.PantallaPresupuestos
+>>>>>>> 04fa32f97f35c788da9d88545e2c467a439f06f0
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaCalendario
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaComparativos
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaEstadisticas
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaEstadisticasCategorias
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaMetas
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaReportes
+import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.PantallaTendencias
+import com.lvmh.pocketpet.presentacion.viewmodels.AuthViewModel
+import com.lvmh.pocketpet.presentacion.viewmodels.EstadisticasViewModel
+import com.lvmh.pocketpet.presentacion.viewmodels.PresupuestoViewModel
+=======
 import com.lvmh.pocketpet.presentacion.pantallas.*
 import com.lvmh.pocketpet.presentacion.pantallas.estadisticas.*
 import com.lvmh.pocketpet.presentacion.viewmodels.*
+>>>>>>> a5bcc36fd536794a016a2d8caea437cf2ff9b2e8
 import com.lvmh.pocketpet.viewmodels.TransaccionViewModel
 
 @Composable
@@ -95,8 +114,20 @@ fun PocketPetNavGraph() {
         // ===============================
 
         composable(Routes.PRINCIPAL) {
+<<<<<<< HEAD
+            if (isAuthenticated) {
+                val viewModel: TransaccionViewModel = hiltViewModel()
+                PantallaPrincipal(
+                    viewModel = viewModel,
+                    alNavegar = { ruta ->
+                        navController.navigate(ruta)
+                    }
+                )
+            } else {
+=======
 
             if (!isAuthenticated) {
+>>>>>>> a5bcc36fd536794a016a2d8caea437cf2ff9b2e8
                 LaunchedEffect(Unit) {
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(Routes.PRINCIPAL) { inclusive = true }
@@ -116,11 +147,26 @@ fun PocketPetNavGraph() {
         }
 
         // ===============================
-        // 👤 PERFIL
+        // 👤 PERFIL - 🔥 ACTUALIZADO CON LOGOUT
         // ===============================
 
         composable(Routes.MI_PERFIL) {
+<<<<<<< HEAD
+            MiPerfil(
+                onBack = {
+                    navController.popBackStack()
+                },
+                onLogoutSuccess = {
+                    // Navegar al logo/login y limpiar todo el stack
+                    navController.navigate(Routes.LOGO) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                authViewModel = authViewModel
+            )
+=======
             MiPerfil(onBack = { navController.popBackStack() })
+>>>>>>> a5bcc36fd536794a016a2d8caea437cf2ff9b2e8
         }
 
         // ===============================
@@ -184,9 +230,24 @@ fun PocketPetNavGraph() {
             val categoriaVM: CategoriaViewModel = hiltViewModel()
 
             PantallaPresupuestos(
+<<<<<<< HEAD
+<<<<<<< HEAD
+                viewModel = viewModel,
+                onBackClick = { navController.popBackStack() },
+                alNavegar = { destino ->
+                    navController.navigate(destino)
+                }
+=======
+                onBackClick = {
+                    navController.popBackStack()
+                },
+                viewModel = viewModel
+>>>>>>> 04fa32f97f35c788da9d88545e2c467a439f06f0
+=======
                 viewModel = presupuestoVM,
                 categoriaViewModel = categoriaVM,
                 onBackClick = { navController.popBackStack() }
+>>>>>>> a5bcc36fd536794a016a2d8caea437cf2ff9b2e8
             )
         }
 
