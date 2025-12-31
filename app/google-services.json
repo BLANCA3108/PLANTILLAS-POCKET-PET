@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "516764580182",
-    "project_id": "pocketpet-a25f4",
-    "storage_bucket": "pocketpet-a25f4.firebasestorage.app"
+    "project_number": "415801926486",
+    "project_id": "pocketpet-17871",
+    "storage_bucket": "pocketpet-17871.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:516764580182:android:98c690c84fa8873750fef7",
+        "mobilesdk_app_id": "1:415801926486:android:d399862312e6b110f36cf7",
         "android_client_info": {
           "package_name": "com.lvmh.pocketpet"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAYbjVo4-jEN8jLXbCDdPgF8O1XF9vocgI"
+          "current_key": "AIzaSyAfhvOMo4GHaSQ_vr1s2BvgsUq51qUbspo"
         }
       ],
       "services": {
