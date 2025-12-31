@@ -30,6 +30,10 @@ class AuthViewModel @Inject constructor(
     private val _currentUser = MutableStateFlow<FirebaseUser?>(null)
     val currentUser: StateFlow<FirebaseUser?> = _currentUser.asStateFlow()
 
+    // Estado de logout
+    private val _isLoggingOut = MutableStateFlow(false)
+    val isLoggingOut: StateFlow<Boolean> = _isLoggingOut.asStateFlow()
+
     init {
         checkAuthStatus()
     }
@@ -125,12 +129,39 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    // Cerrar sesión
+    // Cerrar sesión - Versión simple (sin callbacks)
     fun signOut() {
         auth.signOut()
         _isAuthenticated.value = false
         _currentUser.value = null
         _uiState.value = AuthState.NotAuthenticated
+        _isLoggingOut.value = false
+    }
+
+    // Cerrar sesión - Versión con callbacks para UI
+    fun signOut(
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                _isLoggingOut.value = true
+
+                // Simular un pequeño delay para mostrar el loading
+                kotlinx.coroutines.delay(500)
+
+                auth.signOut()
+                _isAuthenticated.value = false
+                _currentUser.value = null
+                _uiState.value = AuthState.NotAuthenticated
+
+                _isLoggingOut.value = false
+                onSuccess()
+            } catch (e: Exception) {
+                _isLoggingOut.value = false
+                onError(e.localizedMessage ?: "Error al cerrar sesión")
+            }
+        }
     }
 
     // Limpiar errores

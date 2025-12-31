@@ -17,7 +17,7 @@ import com.lvmh.pocketpet.presentacion.viewmodels.PresupuestoViewModel
 import com.lvmh.pocketpet.presentacion.viewmodels.CategoriaViewModel
 import com.lvmh.pocketpet.dominio.modelos.Categoria
 import com.lvmh.pocketpet.dominio.modelos.TipoCategoria
-
+import com.lvmh.pocketpet.presentacion.pantallas.PantallaPresupuestos
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaPresupuestos(

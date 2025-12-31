@@ -1,4 +1,4 @@
-// MiPerfil.kt - VERSIÓN COMPLETA CON CERRAR SESIÓN
+// MiPerfil.kt - VERSIÓN FINAL CORREGIDA
 package com.lvmh.pocketpet.pantallas
 
 import androidx.compose.animation.core.*
@@ -243,7 +243,11 @@ fun MiPerfil(
     // 🔥 DIÁLOGO DE CONFIRMACIÓN DE CERRAR SESIÓN
     if (mostrarDialogoCerrarSesion) {
         AlertDialog(
-            onDismissRequest = { mostrarDialogoCerrarSesion = false },
+            onDismissRequest = {
+                if (!isLoggingOut) {
+                    mostrarDialogoCerrarSesion = false
+                }
+            },
             icon = {
                 Icon(
                     imageVector = Icons.Default.ExitToApp,
@@ -269,27 +273,43 @@ fun MiPerfil(
             confirmButton = {
                 Button(
                     onClick = {
-                        mostrarDialogoCerrarSesion = false
+                        errorMessage = null
                         authViewModel.signOut(
                             onSuccess = {
+                                mostrarDialogoCerrarSesion = false
                                 onLogoutSuccess()
                             },
                             onError = { error ->
                                 errorMessage = error
+                                mostrarDialogoCerrarSesion = false
                             }
                         )
                     },
+                    enabled = !isLoggingOut,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = rojoError
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Sí, cerrar sesión", fontWeight = FontWeight.Bold)
+                    if (isLoggingOut) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Sí, cerrar sesión", fontWeight = FontWeight.Bold)
+                    }
                 }
             },
             dismissButton = {
                 OutlinedButton(
-                    onClick = { mostrarDialogoCerrarSesion = false },
+                    onClick = {
+                        if (!isLoggingOut) {
+                            mostrarDialogoCerrarSesion = false
+                        }
+                    },
+                    enabled = !isLoggingOut,
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text("Cancelar", color = Color.Gray, fontWeight = FontWeight.Bold)
